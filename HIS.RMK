@@ -1,0 +1,58 @@
+//Ubicacion de los OBJ
+
+makepath[.OBJ] = G:\ProyecFW\CaoH\OBJ
+
+//Ubicacion de los PRG
+
+makepath[.PRG] = G:\ProyecFW\CaoH\Fuentes
+
+//Ubicacion de los LIB
+
+makepath[.LIB] = G:\ProyecFW\MiLib\LIB;G:\HARBOUR\LIB;C:\BCC55\bin
+
+//Ubicacion de los LNK
+
+makepath[.LNK] = G:\ProyecFW\CaoH
+
+//Ubicacion de los CH
+
+makepath[.CH] = G:\ProyecFW\INCLUDE;C:\BCC55\INCLUDE;G:\HARBOUR\INCLUDE
+
+//Regla de Compilaci¢n
+
+.PRG.OBJ:
+     G:\HARBOUR\BIN\HARBOUR $* /m /n /w /es2 /oG:\ProyecFW\CaoH\OBJ\$*.C
+     C:\BCC55\BIN\BCC32 -c -IG:\HARBOUR\INCLUDE -oG:\ProyecFW\CaoH\OBJ\$*.OBJ \ProyecFW\CaoH\OBJ\$*.C
+
+// Modulos a compilar.
+
+HIS.OBJ:         G:\ProyecFW\CaoH\Fuentes\HIS.PRG
+CAOTIPOS.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOTIPOS.PRG
+CAONITS.OBJ:     G:\ProyecFW\CaoH\Fuentes\CAONITS.PRG
+CAOEMAIL.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOEMAIL.PRG
+HISDBASE.OBJ:    G:\ProyecFW\CaoH\Fuentes\HISDBASE.PRG
+HISPERSO.OBJ:    G:\ProyecFW\CaoH\Fuentes\HISPERSO.PRG
+HISRIPS.OBJ:     G:\ProyecFW\CaoH\Fuentes\HISRIPS.PRG
+HISTABLA.OBJ:    G:\ProyecFW\CaoH\Fuentes\HISTABLA.PRG
+HISTORIA.OBJ:    G:\ProyecFW\CaoH\Fuentes\HISTORIA.PRG
+HISLIREF.OBJ:    G:\ProyecFW\CaoH\Fuentes\HISLIREF.PRG
+HISLISTA.OBJ:    G:\ProyecFW\CaoH\Fuentes\HISLISTA.PRG
+HISLICON.OBJ:    G:\ProyecFW\CaoH\Fuentes\HISLICON.PRG
+HISLIPAC.OBJ:    G:\ProyecFW\CaoH\Fuentes\HISLIPAC.PRG
+HISPASAR.OBJ:    G:\ProyecFW\CaoH\Fuentes\HISPASAR.PRG
+HISENCUE.OBJ:    G:\ProyecFW\CaoH\Fuentes\HISENCUE.PRG
+RIPCONSU.OBJ:    G:\ProyecFW\CaoH\Fuentes\RIPCONSU.PRG
+RIPSERVI.OBJ:    G:\ProyecFW\CaoH\Fuentes\RIPSERVI.PRG
+RIPDISCO.OBJ:    G:\ProyecFW\CaoH\Fuentes\RIPDISCO.PRG
+
+HIS.EXE:
+
+// Modulos a linkar.
+
+HIS.EXE: HIS.OBJ \
+
+     SET LIB=G:\ProyecFW\MiLib\LIB;G:\HARBOUR\LIB;C:\BCC55\BIN
+     C:\BCC55\BIN\ILINK32.EXE @G:\ProyecFW\CaoH\Fuentes\HIS.RSP
+
+// Compilaci¢n de recursos
+// Fin del fichero make.

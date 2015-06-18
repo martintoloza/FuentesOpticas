@@ -1,0 +1,91 @@
+//Ubicacion de los OBJ
+
+makepath[.OBJ] = G:\ProyecFW\CaoH\OBJ
+
+//Ubicacion de los PRG
+
+makepath[.PRG] = G:\ProyecFW\CaoH\Fuentes
+
+//Ubicacion de los LIB
+
+makepath[.LIB] = G:\ProyecFW\MiLib\LIB;G:\HARBOUR\LIB;C:\BCC55\bin
+
+//Ubicacion de los LNK
+
+makepath[.LNK] = G:\ProyecFW\CaoH
+
+//Ubicacion de los CH
+
+makepath[.CH] = G:\ProyecFW\INCLUDE;C:\BCC55\INCLUDE;G:\HARBOUR\INCLUDE
+
+//Regla de Compilaci¢n
+
+.PRG.OBJ:
+     G:\HARBOUR\BIN\HARBOUR $* /m /n /w /es2 /oG:\ProyecFW\CaoH\OBJ\$*.C
+     C:\BCC55\BIN\BCC32 -c -IG:\HARBOUR\INCLUDE -oG:\ProyecFW\CaoH\OBJ\$*.OBJ \ProyecFW\CaoH\OBJ\$*.C
+
+// Modulos a compilar.
+
+CAO.OBJ:         G:\ProyecFW\CaoH\Fuentes\CAO.PRG
+CAOTIPOS.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOTIPOS.PRG
+CAODBASE.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAODBASE.PRG
+CAONITS.OBJ:     G:\ProyecFW\CaoH\Fuentes\CAONITS.PRG
+CAOBANCO.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOBANCO.PRG
+CAOCODIG.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOCODIG.PRG
+CAOVENTA.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOVENTA.PRG
+CAOPAGOS.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOPAGOS.PRG
+CAOLIFAC.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOLIFAC.PRG
+CAODEVOL.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAODEVOL.PRG
+CAOFACTU.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOFACTU.PRG
+CAONOTAS.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAONOTAS.PRG
+CAOLICAD.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOLICAD.PRG
+CAOLICAR.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOLICAR.PRG
+CAOLICON.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOLICON.PRG
+CAOLIDEV.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOLIDEV.PRG
+CAOLIEXT.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOLIEXT.PRG
+CAOLIHOY.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOLIHOY.PRG
+CAOLIMOV.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOLIMOV.PRG
+CAOLISAL.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOLISAL.PRG
+CAOLIVED.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOLIVED.PRG
+CAOLIVEN.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOLIVEN.PRG
+CAOACTUS.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOACTUS.PRG
+CAOANTIC.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOANTIC.PRG
+CAONOTCR.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAONOTCR.PRG
+CAOCONTA.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOCONTA.PRG
+CAOTALLA.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOTALLA.PRG
+CAOPRECI.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAOPRECI.PRG
+CAORESUM.OBJ:    G:\ProyecFW\CaoH\Fuentes\CAORESUM.PRG
+HISPERSO.OBJ:    G:\ProyecFW\CaoH\Fuentes\HISPERSO.PRG
+HISRIPS.OBJ:     G:\ProyecFW\CaoH\Fuentes\HISRIPS.PRG
+INOAJUST.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOAJUST.PRG
+INOARQUE.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOARQUE.PRG
+INOINART.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOINART.PRG
+INOLIART.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOLIART.PRG
+INOINMON.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOINMON.PRG
+INOLIMON.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOLIMON.PRG
+INOINREP.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOINREP.PRG
+INOLIREP.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOLIREP.PRG
+INOLICOD.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOLICOD.PRG
+INOLIDEV.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOLIDEV.PRG
+INOLIEST.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOLIEST.PRG
+INOLIEXT.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOLIEXT.PRG
+INOLIFAC.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOLIFAC.PRG
+INOLIMOP.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOLIMOP.PRG
+INOLIRES.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOLIRES.PRG
+INOLIRID.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOLIRID.PRG
+INOLIRSM.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOLIRSM.PRG
+INOREMIS.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOREMIS.PRG
+INOREPOS.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOREPOS.PRG
+INOVENTA.OBJ:    G:\ProyecFW\CaoH\Fuentes\INOVENTA.PRG
+
+CAO.EXE:
+
+// Modulos a linkar.
+
+CAO.EXE: CAO.OBJ \
+
+     SET LIB=G:\ProyecFW\MiLib\LIB;G:\HARBOUR\LIB;C:\BCC55\BIN
+     C:\BCC55\BIN\ILINK32.EXE @G:\ProyecFW\CaoH\Fuentes\CAO.RSP
+
+// Compilaci¢n de recursos
+// Fin del fichero make.

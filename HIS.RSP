@@ -1,0 +1,49 @@
+-aa -Tpe -s +
+-LG:\ProyecFW\MiLIb\LIB;G:\HARBOUR\LIB;C:\BCC55\LIB+
+-jG:\ProyecFW\CaoH\OBJ;C:\BCC55\LIB+
+C0W32.OBJ +
+\ProyecFW\CaoH\OBJ\HIS.OBJ          +
+\ProyecFW\CaoH\OBJ\CAOTIPOS.OBJ     +
+\ProyecFW\CaoH\OBJ\CAONITS.OBJ      +
+\ProyecFW\CaoH\OBJ\CAOEMAIL.OBJ     +
+\ProyecFW\CaoH\OBJ\HISDBASE.OBJ     +
+\ProyecFW\CaoH\OBJ\HISPERSO.OBJ     +
+\ProyecFW\CaoH\OBJ\HISRIPS.OBJ      +
+\ProyecFW\CaoH\OBJ\HISTABLA.OBJ     +
+\ProyecFW\CaoH\OBJ\HISTORIA.OBJ     +
+\ProyecFW\CaoH\OBJ\HISLIREF.OBJ     +
+\ProyecFW\CaoH\OBJ\HISLISTA.OBJ     +
+\ProyecFW\CaoH\OBJ\HISLICON.OBJ     +
+\ProyecFW\CaoH\OBJ\HISLIPAC.OBJ     +
+\ProyecFW\CaoH\OBJ\HISPASAR.OBJ     +
+\ProyecFW\CaoH\OBJ\HISENCUE.OBJ     +
+\ProyecFW\CaoH\OBJ\RIPCONSU.OBJ     +
+\ProyecFW\CaoH\OBJ\RIPSERVI.OBJ     +
+\ProyecFW\CaoH\OBJ\RIPDISCO.OBJ,    +
+\ProyecFW\CaoH\HIS.EXE,             +
+HIS.MAP,                            +
+G:\fwh\libx\TWBRW32.LIB             +
+G:\fwh\BtnGet\lib\BTNGET32.LIB      +
+G:\fwh\TSBrowse\lib\SBROWSEH.LIB    +
+G:\xbase\CLASSES\Ole2\LIB\Hbole.LIB +
+G:\fwh\libh\FiveH.lib               +
+G:\fwh\lib\FiveHC.lib               +
+G:\fwh\Eagle1\lib\Common.lib        +
+G:\ProyecFW\MiLib\lib\Mtl.lib       +
+G:\fwh\Eagle1\lib\Eagle1.lib        +
+G:\fwh\Eagle1\lib\Eagle1C.lib       +
+G:\fwh\Eagle1\mslib\libmysql.lib    +
+G:\fwh\lib\Objects.lib              +
+G:\harbour\lib\rtl.lib              +
+G:\harbour\lib\vm.lib               +
+G:\harbour\lib\gtwin.lib            +
+G:\harbour\lib\lang.lib             +
+G:\harbour\lib\macro.lib            +
+G:\harbour\lib\rdd.lib              +
+G:\harbour\lib\dbfntx.lib           +
+G:\harbour\lib\dbfcdx.lib           +
+G:\harbour\lib\debug.lib            +
+G:\harbour\lib\common.lib           +
+G:\harbour\lib\pp.lib               +
+C:\BCC55\lib\cw32.lib               +
+C:\BCC55\lib\import32.lib,,\ProyecFW\CaoH\HIS.RES

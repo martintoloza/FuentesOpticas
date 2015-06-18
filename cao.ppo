@@ -1,0 +1,638 @@
+#line 1 "Fivewin.ch"
+#line 1 "Dialog.ch"
+#line 41 "Fivewin.ch"
+#line 1 "Font.ch"
+#line 42 "Fivewin.ch"
+#line 1 "Ini.ch"
+#line 43 "Fivewin.ch"
+#line 1 "Menu.ch"
+#line 44 "Fivewin.ch"
+#line 1 "Print.ch"
+#line 45 "Fivewin.ch"
+#line 1 "Colors.ch"
+#line 48 "Fivewin.ch"
+#line 1 "DLL.ch"
+#line 49 "Fivewin.ch"
+#line 1 "Folder.ch"
+#line 50 "Fivewin.ch"
+#line 1 "Objects.ch"
+#line 1 "hbclass.ch"
+#line 1 "hbsetup.ch"
+#line 74 "hbclass.ch"
+#line 1 "hboo.ch"
+#line 75 "hbclass.ch"
+DECLARE HBClass New(cName AS String,OPTIONAL SuperParams ) AS CLASS HBClass Create() AS Object Instance() AS Object AddClsMthds(cName AS String,@MethodName(),nScope AS Numeric,n2 AS Numeric,n3 AS Numeric ) AddMultiClsData(cType AS String,uVal,nScope AS Numeric,aDatas AS Array OF String ) AddMultiData(cType AS String,uVal,nScope AS Numeric,aDatas AS Array OF String,x AS LOGICAL,lPer AS LOGICAL ) AddMethod(cName AS String,@MethodName(),nScope AS Numeric,lPersistent AS LOGICAL ) AddInLine(cName AS String,bBlock AS CodeBlock,nScope AS Numeric,lPersistent AS LOGICAL ) AddVirtual(cName AS String )
+#line 6 "Objects.ch"
+#line 52 "Fivewin.ch"
+#line 1 "ODBC.ch"
+#line 54 "Fivewin.ch"
+#line 1 "DDE.ch"
+#line 55 "Fivewin.ch"
+#line 1 "Video.ch"
+#line 56 "Fivewin.ch"
+#line 1 "VKey.ch"
+#line 57 "Fivewin.ch"
+#line 1 "Tree.ch"
+#line 58 "Fivewin.ch"
+#line 1 "WinApi.ch"
+#line 1 "FwMsgs.h"
+#line 5 "WinApi.ch"
+#line 59 "Fivewin.ch"
+extern errorsys
+#line 10 "fuentes\CAO.prg"
+#line 1 "Colors.ch"
+#line 11 "fuentes\CAO.prg"
+#line 1 "Objects.ch"
+#line 12 "fuentes\CAO.prg"
+#line 1 "Eagle1.ch"
+#line 13 "fuentes\CAO.prg"
+
+MEMVAR oApl
+
+FUNCTION Main()
+   LOCAL hBorland,oBru,oIco
+   PUBLIC oApl
+__SetCentury("ON" )
+Set(1,"ON" )
+Set(27,"ON" )
+Set(5,1990 )
+Set(4,"DD.MM.YYYY" )
+Set(11,"ON" )
+
+
+
+
+EXTERNAL DBFCDX
+RDDSETDEFAULT("DBFCDX")
+SETKEY(115,{||Empresa()} )
+
+oApl := TCao()
+oApl:New()
+
+oIco := TIcon():New(,,"RECIBOS",,)
+ oBru := TBrush():New(,,oApl:FondoWnd(),)
+
+
+
+
+
+
+
+
+oApl:oWnd := TMdiFrame():New(1,1,400,600,oApl:cEmpresa + " [ Sistema de Caja Registradora ver 1.0 ]",,Creamenu(),oBru,oIco,8388608,(0 + (128 * 256 ) + (192 * 65536 ) ),,,,,,.T. )
+
+   oApl:oWnd:oMsgBar := TMsgBar():New(oApl:oWnd,"Tolozano. Telf: 3430560  Celular: 300-8045043",.F.,.T.,.T.,.T.,,,,)
+    TBar():New(oApl:oWnd,40,40,.T.,,)
+
+
+       TBtnBmp():NewBar("Salir",,,,,{|This|Salir()},.F.,oApl:oWnd:oBar,.T.,,"Cerrar la aplicación",.F.,,"Salir()",,,,,,!.T.,,)
+
+
+       TBtnBmp():NewBar("ARTICULOS",,,,,{|This|CaoVenta(.f.)},.F.,oApl:oWnd:oBar,.F.,,"Crear, Anular e Imprimir Facturas (Ctrl+F)",.F.,,"CaoVenta(.f.)",,,,,,!.T.,,)
+
+
+       TBtnBmp():NewBar("MONEY",,,,,{|This|CaoPagos(.t.)},.T.,oApl:oWnd:oBar,.F.,,"Pagos a Facturas (Ctrl+P)",.F.,,"CaoPagos(.t.)",,,,,,!.T.,,)
+
+
+       TBtnBmp():NewBar("REINDEZAR",,,,,{|This|CaoDevol()},.F.,oApl:oWnd:oBar,.F.,,"Devolución a Bodega o Traslados (Ctrl+D)",.F.,,"CaoDevol()",,,,,,!.T.,,)
+
+
+       TBtnBmp():NewBar("CLIENTE",,,,,{|This|InoInart("346")},.F.,oApl:oWnd:oBar,.F.,,"Compras de Articulos (Ctrl+I)",.F.,,'InoInart("346")',,,,,,!.T.,,)
+
+
+       TBtnBmp():NewBar("ARCHIVAR",,,,,{|This|InoInmon()},.T.,oApl:oWnd:oBar,.F.,,"Compras de Monturas (Ctrl+M)",.F.,,"InoInmon()",,,,,,!.T.,,)
+
+
+
+
+       TBtnBmp():NewBar(,,oApl:cIco+"Database.bmp",,"Mantenimiento de la Base de Datos",{|This|oApl:UtilDB()},.F.,oApl:oWnd:oBar,.F.,,"Mantenimiento de la Base de Datos",.F.,,"oApl:UtilDB()",,,,,,!.T.,,)
+
+
+oApl:oWnd:Activate(Upper("MAXIMIZED") ,oApl:oWnd:bLClicked,oApl:oWnd:bRClicked,oApl:oWnd:bMoved,oApl:oWnd:bResized,oApl:oWnd:bPainted,oApl:oWnd:bKeyDown,oApl:oWnd:bInit := { | Self | (If(oApl:lSalir,oApl:oWnd:End(),)) } ,,,,,,,,,{||If(oApl:lSalir,.t.,Salir() )},,oApl:oWnd:bLButtonUp )
+
+
+RETURN NIL
+
+
+FUNCTION Salir()
+
+If (MsgYesNo("Deseas salir del programa","Abandonar el sistema"),(oApl:oMySql:End(),oApl:lSalir := .t.,oApl:oWnd:End()),)
+RETURN oApl:lSalir
+
+
+_HB_CLASS TCao ; function TCao() ; static s_oClass ; local nScope ; nScope := 1 ; if s_oClass == NIL ; s_oClass := IIF(.F.,,HBClass():new("TCao",__CLS_PARAM () ) ) ; 
+
+   _HB_MEMBER {AS ARRAY aWHija} ; s_oClass:AddMultiData("ARRAY",{ NIL,NIL },iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,16,0 ),{"aWHija"},.F.,.F. ) 
+   _HB_MEMBER {AS ARRAY aInvme} ; s_oClass:AddMultiData("ARRAY",{ 0,0 },iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,16,0 ),{"aInvme"},.F.,.F. ) 
+
+
+   _HB_MEMBER {AS ARRAY aDsn} ; s_oClass:AddMultiData("ARRAY",{ PADR("ODBC Oracle",30),PADR("laboratorio",20),PADR("labora",20),.f.,.f.,.t.,NIL },iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,16,0 ),{"aDsn"},.F.,.F. ) 
+   _HB_MEMBER { aOptic} ; s_oClass:AddMultiData(,,iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,16,0 ),{"aOptic"},.F.,.F. ) 
+   _HB_MEMBER { cEmpresa} ; s_oClass:AddMultiData(,"Teodoro Tarud & CIA. S.A.",iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,16,0 ),{"cEmpresa"},.F.,.F. ) 
+   _HB_MEMBER { dFec} ; s_oClass:AddMultiData(,DATE(),iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,16,0 ),{"dFec"},.F.,.F. ) 
+   _HB_MEMBER { lSalir} ; s_oClass:AddMultiData(,.F.,iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,16,0 ),{"lSalir"},.F.,.F. ) 
+   _HB_MEMBER { Tipo} ; s_oClass:AddMultiData(,"U",iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,16,0 ),{"Tipo"},.F.,.F. ) 
+   _HB_MEMBER { cCiu,cPer,cRuta1,cRuta2,cLocal,nUS} ; s_oClass:AddMultiData(,,iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,16,0 ),{"cCiu","cPer","cRuta1","cRuta2","cLocal","nUS"},.F.,.F. ) 
+   _HB_MEMBER { cImpres,cPuerto,nTHoja,nLF,nItems} ; s_oClass:AddMultiData(,,iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,16,0 ),{"cImpres","cPuerto","nTHoja","nLF","nItems"},.F.,.F. ) 
+   _HB_MEMBER { cIco,cIP,cUser,cBaseD,nPort,cSocket} ; s_oClass:AddMultiData(,,iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,16,0 ),{"cIco","cIP","cUser","cBaseD","nPort","cSocket"},.F.,.F. ) 
+   _HB_MEMBER { lEnLinea,lFam,nEmpresa,nSaldo} ; s_oClass:AddMultiData(,,iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,16,0 ),{"lEnLinea","lFam","nEmpresa","nSaldo"},.F.,.F. ) 
+   _HB_MEMBER { nClrBackHead,nClrForeHead,nClrBack,nClrFore} ; s_oClass:AddMultiData(,,iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,16,0 ),{"nClrBackHead","nClrForeHead","nClrBack","nClrFore"},.F.,.F. ) 
+   _HB_MEMBER { nClrBackFocus,nClrForeFocus,nClrNBack,nClrNFore,nGotFocus,nLostFocus} ; s_oClass:AddMultiData(,,iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,16,0 ),{"nClrBackFocus","nClrForeFocus","nClrNBack","nClrNFore","nGotFocus","nLostFocus"},.F.,.F. ) 
+   _HB_MEMBER { oMysql,oDb,oWnd,oODbc} ; s_oClass:AddMultiData(,,iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,16,0 ),{"oMysql","oDb","oWnd","oODbc"},.F.,.F. ) 
+   _HB_MEMBER { oEmp,oNit,oBco,oInv,oAtc} ; s_oClass:AddMultiData(,,iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,16,0 ),{"oEmp","oNit","oBco","oInv","oAtc"},.F.,.F. ) 
+   _HB_MEMBER { oMes,oFac,oFam,oVen,oPag} ; s_oClass:AddMultiData(,,iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,16,0 ),{"oMes","oFac","oFam","oVen","oPag"},.F.,.F. ) 
+   _HB_MEMBER { oHab,oHis,oTra} ; s_oClass:AddMultiData(,,iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,16,0 ),{"oHab","oHis","oTra"},.F.,.F. ) 
+
+   _HB_MEMBER NEW() AS CLASS TCao ; s_oClass:AddMethod("NEW",@TCao_NEW(),iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.T.,8,0 ),.F. )
+   _HB_MEMBER Conectar(cPassw,oGet ) ; s_oClass:AddMethod("Conectar",@TCao_Conectar(),iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,8,0 ),.F. )
+   _HB_MEMBER Abrir(cTabla,cOrderBy,lBlank,lTemp,nLimit,oGet ) ; s_oClass:AddMethod("Abrir",@TCao_Abrir(),iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,8,0 ),.F. )
+   _HB_MEMBER FondoWnd() ; s_oClass:AddMethod("FondoWnd",@TCao_FondoWnd(),iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,8,0 ),.F. )
+   _HB_MEMBER UtilDB() ; s_oClass:AddMethod("UtilDB",@TCao_UtilDB(),iif(.F.,1,iif(.F.,2,iif(.F.,4,nScope) ) ) + iif(.F.,8,0 ),.F. )
+; s_oClass:Create() ; endif ; return s_oClass:Instance() AS CLASS TCao ; 
+
+
+static function TCao_NEW() ; local Self AS CLASS TCao := QSelf() AS CLASS TCao 
+   LOCAL oIni,cFecha,aC := ARRAY(30),nP := 0
+   LOCAL oDlg,oGet[10],cPassw := SPACE(16)
+oIni := TIni():New(".\Cao.ini" )
+
+   ::cIP := oIni:Get("MySQL","ServerIP","LocalHost",::cIP )
+
+   ::cUser := oIni:Get("MySQL","Usuario","root",::cUser )
+
+   ::cBaseD := oIni:Get("MySQL","DataBase","mysql",::cBaseD )
+
+   ::nPort := oIni:Get("MySQL","nPort",3306,::nPort )
+
+   ::cSocket := oIni:Get("MySQL","cSocket","/tmp/mysql.sock",::cSocket )
+
+   ::cRuta1 := oIni:Get("Tablas","Ruta1","\ProyecFW\Bitmap\",::cRuta1 )
+
+   ::cRuta2 := oIni:Get("Tablas","Ruta2","\ProyecFW\Datos\",::cRuta2 )
+
+   ::cLocal := oIni:Get("Tablas","Localiz","COC",::cLocal )
+
+   ::nUS := oIni:Get("Tablas","Dolar",2500,::nUS )
+
+   ::cImpres := oIni:Get("Impresora","Modelo","EPSON",::cImpres )
+
+   ::cPuerto := oIni:Get("Impresora","Puerto","LPT1",::cPuerto )
+
+   ::nTHoja := oIni:Get("Impresora","THoja",66,::nTHoja )
+
+   ::nLF := oIni:Get("Impresora","LFactura",12,::nLF )
+
+   ::nItems := oIni:Get("Impresora","ItemsFac",11,::nItems )
+
+   cFecha := oIni:Get("BrowSetu","Colors","252,231,165,120,25,25,255,255,235,0,0,0,225,192,192,0,0,0,128,178,182,100,0,0,255,255,255,0,0,0",cFecha )
+
+
+AFILL(aC,0 )
+WHILE !EMPTY(cFecha)
+   aC[++nP] := VAL(Saca(@cFecha,",") )
+ENDDO
+::cIco := STRTRAN(::cRuta1,"map","maps" )
+::nClrBackHead := nRGB(aC[01],aC[02],aC[03] )
+::nClrForeHead := nRGB(aC[04],aC[05],aC[06] )
+::nClrBack := nRGB(aC[07],aC[08],aC[09] )
+::nClrFore := nRGB(aC[10],aC[11],aC[12] )
+::nClrBackFocus := nRGB(aC[13],aC[14],aC[15] )
+::nClrForeFocus := nRGB(aC[16],aC[17],aC[18] )
+::nClrNBack := nRGB(aC[19],aC[20],aC[21] )
+::nClrNFore := nRGB(aC[22],aC[23],aC[24] )
+::nGotFocus := nRGB(aC[25],aC[26],aC[27] )
+::nLostFocus := nRGB(aC[28],aC[29],aC[30] )
+cFecha := "CONECTANDO ...."
+::cIP := PADR(::cIP ,16 )
+::cUser := PADR(::cUser,16 )
+::cBaseD:= PADR(::cBaseD,16 )
+aC := { 1,2 }
+If !EMPTY(::cUser )
+   AADD(aC,3 )
+EndIf
+oDlg = TDialog():New(1,2,15,40,"Conexion TC/IP remota a " + oApl:cIP,,,.F.,,,,,,.F.,,,,,)
+
+    TSay():New(02,0,{||"Server IP:"},oDlg,,,.F.,.T.,.F.,.T.,,,50,10,.F.,.F.,.F.,.F.,.F. )
+    oGet[1] := TGet():New(02,52,{ | u | If(PCount()==0,::cIP,::cIP:= u ) },oDlg,46,10,,,,,,.F.,,.T.,,.F.,,.F.,.F.,,.F.,.f.,.f.,,.F.,,,,)
+    TSay():New(16,0,{||"Base Datos:"},oDlg,,,.F.,.T.,.F.,.T.,,,50,10,.F.,.F.,.F.,.F.,.F. )
+    oGet[2] := TGet():New(16,52,{ | u | If(PCount()==0,::cBaseD,::cBaseD:= u ) },oDlg,46,10,,,,,,.F.,,.T.,,.F.,,.F.,.F.,,.F.,.f.,.f.,,.F.,,,,)
+    TSay():New(30,0,{||"Usuario:"},oDlg,,,.F.,.T.,.F.,.T.,,,50,10,.F.,.F.,.F.,.F.,.F. )
+    oGet[3] := TGet():New(30,52,{ | u | If(PCount()==0,::cUser,::cUser:= u ) },oDlg,46,10,,,,,,.F.,,.T.,,.F.,,.F.,.F.,,.F.,.f.,.f.,,.F.,,,,)
+    TSay():New(44,0,{||"Clave:"},oDlg,,,.F.,.T.,.F.,.T.,,,50,10,.F.,.F.,.F.,.F.,.F. )
+    oGet[4] := TGet():New(44,52,{ | u | If(PCount()==0,cPassw,cPassw:= u ) },oDlg,46,10,,,,,,.F.,,.T.,,.F.,,.F.,.F.,,.F.,.T.,,)
+    oGet[5] := TSay():New(58,0,{||cFecha},oDlg,,,.F.,.T.,.F.,.T.,,,50,10,.F.,.F.,.F.,.F.,.F. )
+    oGet[6] := TMeter():New(58,52,{ | u | If(PCount()==0,::aInvme[1],::aInvme[1]:= u ) },100,oDlg,46,10,.F.,.T.,,,.F.,,,,,.F. )
+    oGet[7] := TSay():New(58,104,{||::aInvme[2]},oDlg,,,.F.,.F.,.F.,.T.,,,30,10,.F.,.F.,.F.,.F.,.F. )
+    oGet[8] := TSay():New(72,52,{||"     "},oDlg,,,.F.,.F.,.F.,.T.,,,90,10,.F.,.F.,.F.,.F.,.F. )
+
+
+    oGet[09] := TButton():New(88,50,"&Ok",oDlg,{||(oGet[9]:Disable(),::Conectar(cPassw,oGet ),oDlg:End() )},44,12,,,.F.,.T.,.F.,,.F.,,,.F. )
+
+    oGet[10] := TButton():New(88,100,"&Cancel",oDlg,{||(::lSalir := .t.,oDlg:End() )},44,12,,,.F.,.T.,.F.,,.F.,,,.T. )
+
+oDlg:Activate(oDlg:bLClicked,oDlg:bMoved,oDlg:bPainted,.T.,,,{|Self|AEVAL(aC,{|xV| oDlg:PostMsg(256,13,0 ) } )},oDlg:bRClicked,,)
+If !::lSalir
+
+
+
+   cFecha := If(RIGHT(AmPm(TIME()),2 ) == "am","BUENOS DIAS","BUENAS TARDES" ) + "   >> HOY ES <<" + Chr(13)+Chr(10) + NtChr(DATE(),"5" ) + " " + NtChr(DATE(),"2" ) + Chr(13)+Chr(10) + "Y SON LAS " + AmPm(TIME())
+   If !MsgYesNo(cFecha,::cUser )
+      ::lSalir := .t.
+      RETURN NIL
+   EndIf
+   If oApl:dFec >= CTOD("30.12.2008") + ::oEmp:DIAS
+
+
+      MsgStop("ESTO ERA UN PROGRAMA DE DEMOSTRACION" + Chr(13)+Chr(10) + "POR FAVOR CONTACTE A SU PROPIETARIO " + Chr(13)+Chr(10) + "PARA OBTENER LA LICENCIA............" )
+      ::lSalir := .t.
+   EndIf
+   If DATE() < ::oEmp:FEC_HOY .AND. oApl:lEnLinea
+      MsgStop("Fecha del Sistema menor que la Ultima Facturación",">> ERROR <<" )
+      ::lSalir := .t.
+   EndIf
+EndIf
+IF !::lSalir .AND. FILE("PRECIO.INI" )
+   oIni := TIni():New(".\PRECIO.ini" )
+       cFecha := oIni:Get("FechaI","Fecha","01.01.2003",cFecha )
+   
+   If cFecha == DTOC(DATE())
+      PreciosOft("cadtesfe",7 )
+      PreciosOft("cadtlist",14)
+      PreciosOft("cadtmate",8 )
+      FERASE("PRECIO.INI" )
+   EndIf
+EndIf
+RETURN NIL
+
+
+static function TCao_Conectar(cPassw,oGet ) ; local Self AS CLASS TCao := QSelf() AS CLASS TCao 
+   LOCAL nSec := Seconds()
+
+
+
+
+
+ ::oMySql := TMSConnect():New(); ::oMySql:Connect(ALLTRIM(::cIP),ALLTRIM(::cUser),ALLTRIM(cPassw),,::nPort,ALLTRIM(::cSocket),)
+ If ::oMySql:lConnected
+    ::oDb := ::oMySql:oDbFrom((ALLTRIM(::cBaseD)),.t. )
+    If ::oDb:Used()
+       oGet[5]:setText("Conectado " + LTRIM(STR(SECONDS() - nSec)) +" S" )
+       ::oEmp := ::Abrir("cadempre",,,,,oGet )
+       ::oEmp:GoTop():Read()
+       cPassw := If(oApl:cLocal == "LOC","COC",oApl:cLocal )
+       ::aOptic := {}
+       While !::oEmp:EOF()
+          ::oEmp:xLoad()
+          AADD(::aOptic,{ ::oEmp:LOCALIZ,STR(::oEmp:OPTICA,2) } )
+          ::oEmp:Skip(1):Read()
+       EndDo
+       ::oEmp:Seek({"Localiz",cPassw} )
+       nEmpresa(.f. )
+       ::oNit := ::Abrir("cadclien",,,,,oGet )
+       ::oBco := ::Abrir("cadbanco",,,,,oGet )
+       ::oInv := ::Abrir("cadinven","Codigo",,,150,oGet )
+       ::oMes := ::Abrir("cadinvme","Optica, Codigo, Anomes",.t.,,50,oGet )
+       ::oFac := ::Abrir("cadfactu","Optica, Numfac, Tipo",,,50,oGet )
+       ::oFam := ::Abrir("cadfactm","Optica, Numfac, Tipo",,,30,oGet )
+       ::oPag := ::Abrir("cadpagos","Optica, Numfac, Tipo",,,30,oGet )
+       ::oVen := ::Abrir("cadventa","Optica, Numfac, Tipo",,,50,oGet )
+       ::oHab := ::Abrir("ciudades","Codigo",,,100,oGet )
+       ::oAtc := ::Abrir("cadantic","Optica, Numero",,,50 )
+       ::oHis := ::Abrir("historia","Nroiden",,,50,oGet )
+
+    Else
+       ::lSalir := .t.
+    EndIf
+ Else
+    ::lSalir := .t.
+ EndIf
+If ::lSalir
+   MsgInfo("No hay conexion","Señor(a) : "+ALLTRIM(::cUser) )
+EndIf
+
+RETURN NIL
+
+
+static function TCao_Abrir(cTabla,cOrderBy,lBlank,lTemp,nLimit,oGet ) ; local Self AS CLASS TCao := QSelf() AS CLASS TCao 
+   LOCAL oTb,lSi := .f.,nSec,nCon := 0
+   cOrderBy := If(cOrderBy == nil,1,cOrderBy ) ; lBlank := If(lBlank == nil,.f.,lBlank ); lTemp := If(lTemp == nil,.f.,lTemp ); 
+While !lSi .AND. nCon <= 3
+   If !(lSi := ::oDb:ExistTable(cTabla ))
+      Diccionario(cTabla )
+   EndIf
+   nCon++
+EndDo
+If ::oDb:ExistTable(cTabla )
+
+   nSec:= Seconds()
+   oTb := TMyTable((cTabla) ):New(::oDb,(cTabla),"",,cOrderBy,nLimit )
+   If !(lSi := oTb:Open())
+      If ::oMySql:GetErrNo() == 1030
+         If ::oDb:Repair(cTabla )
+            MsgInfo("la Tabla "+cTabla,"Se Reparo" )
+            lSi := oTb:Open()
+         Else
+            MsgStop("la Tabla "+cTabla,"No se Pudo Reparar" )
+         EndIf
+      EndIf
+   EndIf
+   If lSi
+      nCon := oTb:RecCount()
+      If nCon == 0 .AND. !lTemp
+         MsgInfo("está sin registros",cTabla )
+      ElseIf nCon > 0 .AND. lTemp
+         oTb:dbEval({|o| o:Delete(.f.,1 ) } )
+      EndIf
+      If lBlank
+         oTb:xBlank()
+      EndIf
+   EndIf
+   If oGet # NIL
+      nSec := SECONDS() - nSec
+      oGet[8]:setText(cTabla +" Demore " + STR(nSec) + " Seg" )
+      ::aInvme[1] += 10 ; oGet[6]:Refresh() ; SysRefresh()
+      ::aInvme[2] += nSec ; oGet[7]:Refresh()
+   EndIf
+Else
+   MsgInfo("No Existe !!!!",cTabla )
+EndIf
+RETURN oTb
+
+
+static function TCao_FondoWnd() ; local Self AS CLASS TCao := QSelf() AS CLASS TCao 
+   LOCAL aEstru := DIRECTORY(oApl:cRuta1+"*.BMP" )
+   LOCAL aNombre := {},nFon,nLen
+AEVAL(aEstru,{|aFile| AADD(aNombre,oApl:cRuta1+ aFile[1] ) } )
+If LEN(aNombre ) == 0
+   AADD(aNombre,"STYLE TILED" )
+EndIf
+nLen := LEN(aNombre )
+nFon := nRandom(nLen ) + 1
+nFon := If(nFon > nLen,nLen,nFon )
+RETURN aNombre[ nFon ]
+
+
+static function TCao_UtilDB() ; local Self AS CLASS TCao := QSelf() AS CLASS TCao 
+   LOCAL bOK,oDlg,oGet := ARRAY(4),nOpc := 3
+   LOCAL cTabla := ::oDb:aTables[1]
+
+
+bOK := { {|cTB| ::oDb:Check(cTB ) } ,{|cTB| ::oDb:Optimize(cTB ) },{|cTB| ::oDb:Repair(cTB ) } ,"" }
+oDlg = TDialog():New(1,2,08,40,"Database Utilidades",,,.F.,,,,,,.F.,,,,,)
+    TSay():New(02,0,{||"Opción"},oDlg,,,.F.,.T.,.F.,.T.,,,50,10,.F.,.F.,.F.,.F.,.F. )
+
+    oGet[1] := TComboBox():New(02,52,{ | u | If(PCount()==0,nOpc,nOpc:= u ) },{"Chequear","Optimizar","Reparar"},68,99,oDlg,,,,,,.T.,,,.F.,,.F.,,,,,)
+    TSay():New(16,0,{||"Tabla"},oDlg,,,.F.,.T.,.F.,.T.,,,50,10,.F.,.F.,.F.,.F.,.F. )
+
+    oGet[2] := TComboBox():New(16,52,{ | u | If(PCount()==0,cTabla,cTabla:= u ) },::oDb:aTables,68,99,oDlg,,,,,,.T.,,,.F.,,.F.,,,,,)
+
+
+
+
+
+    oGet[3] := TButton():New(32,50,"Ok",oDlg,{||(bOK[4] := {"Chequear","Optimizar","Reparar"}[nOpc],If(EVAL(bOK[nOpc],cTabla ),MsgInfo(bOK[4]+" "+cTabla,"HECHO" ),MsgInfo("Al "+ bOK[4],"ERROR" ) ),oGet[3]:oJump := oGet[2],oGet[2]:SetFocus() )},40,12,,,.F.,.T.,.F.,,.F.,,,.F. )
+
+    oGet[4] := TButton():New(32,100,"Cancel",oDlg,{||oDlg:End()},40,12,,,.F.,.T.,.F.,,.F.,,,.T. )
+oDlg:Activate(oDlg:bLClicked,oDlg:bMoved,oDlg:bPainted,.T.,,,,oDlg:bRClicked,,)
+RETURN NIL
+
+
+FUNCTION Login(cTit )
+   LOCAL oDlg,oGet := ARRAY(4),aLog := { oApl:cUser,SPACE(16),0,.f. }
+   cTit := If(cTit == nil,"",cTit ) ; 
+oDlg = TDialog():New(1,2,08,40,cTit,,,.F.,,,,,,.F.,,,,,)
+    TSay():New(02,0,{||"Usuario:"},oDlg,,,.F.,.T.,.F.,.T.,,,50,10,.F.,.F.,.F.,.F.,.F. )
+    oGet[1] := TGet():New(02,52,{ | u | If(PCount()==0,aLog[1],aLog[1]:= u ) },oDlg,46,10,,,,,,.F.,,.T.,,.F.,,.F.,.F.,,.F.,.f.,.f.,,.F.,,,,)
+    TSay():New(16,0,{||"Clave:"},oDlg,,,.F.,.T.,.F.,.T.,,,50,10,.F.,.F.,.F.,.F.,.F. )
+    oGet[2] := TGet():New(16,52,{ | u | If(PCount()==0,aLog[2],aLog[2]:= u ) },oDlg,46,10,,,,,,.F.,,.T.,,.F.,,.F.,.F.,,.F.,.T.,,)
+
+
+
+
+
+    oGet[3] := TButton():New(32,50,"&Ok",oDlg,{||(aLog[3]++,aLog[4] := Leer_Clave(aLog ),If(aLog[3] > 3 .OR. aLog[4],oDlg:End(),(MsgInfo("Clave Erronea","Error" ),oGet[3]:oJump := oGet[1],oGet[1]:SetFocus())) )},44,12,,,.F.,.T.,.F.,,.F.,,,.F. )
+
+    oGet[4] := TButton():New(32,100,"&Cancel",oDlg,{||oDlg:End()},44,12,,,.F.,.T.,.F.,,.F.,,,.T. )
+   ACTIVAGET(oGet)
+oDlg:Activate(oDlg:bLClicked,oDlg:bMoved,oDlg:bPainted,.T.,,,,oDlg:bRClicked,,)
+RETURN aLog[4]
+
+
+FUNCTION Leer_Clave(aUsu )
+   LOCAL hRes,cQry
+
+cQry := "SELECT Host FROM mysql.user WHERE User = " + xValToChar(aUsu[1] ) + " AND Password = OLD_PASSWORD(" + xValToChar(aUsu[2] ) +")"
+
+hRes := If(MSQuery(oApl:oMySql:hConnect,cQry ),MSStoreResult(oApl:oMySql:hConnect ),0 )
+
+RETURN (MSNumRows(hRes ) != 0 )
+
+
+FUNCTION Encriptar(cNomH,lEncrita )
+   LOCAL nC,nX,nLen := LEN(ALLTRIM(cNomH ) )
+lEncrita := If(lEncrita == nil,.t.,lEncrita ) ; 
+FOR nX := 1 TO nLen
+   If lEncrita
+      nC := ASC(SUBSTR(cNomH,nX,1 ) ) + 4 + nX * 25
+   Else
+      nC := ASC(SUBSTR(cNomH,nX,1 ) ) - 4 - nX * 25
+   EndIf
+   cNomH := STUFF(cNomH,nX,1,CHR(nC ) )
+Next
+RETURN cNomH
+
+
+FUNCTION MsgDate(dDate,cPrompt,oGet )
+   LOCAL oDlg,oFont,oCursor,dSelect,dWork
+   LOCAL nRow,nCol,nMonth,nYear,cCYear,cFechaLarga
+
+   LOCAL aMes := { "Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"}
+   dDate := If(dDate == nil,Date(),dDate ) ; cPrompt := If(cPrompt == nil,"Selecione una Fecha",cPrompt ); 
+dDate := If(EMPTY(dDate),Date(),dDate )
+cFechaLarga := dDateToString(dDate,aMes )
+cCYear := str(year(dDate),4)
+nYear := Year(dDate )
+nMonth := Month(dDate )
+dSelect := dDate
+
+dWork := TToD("01/" + padl(nMonth,2 ) + "/" + right(cCYear,2),"DD/MM/YY" )
+while DoW(dWork ) > 1
+   dWork --
+enddo
+
+oFont := TFont():New("Ms Sans Serif",0,-14,,,,,,,,,,,,,,)
+oDlg = TDialog():New(,,,,cPrompt,,,.F.,,,,,,.F.,,oFont,,250,235 )
+
+
+    TComboBox():New(0.2,.75,{ | u | If(PCount()==0,nMonth,nMonth:= u ) },aMes,50,150,oDlg,,{|Self|MoveCalendar(oDlg,1,nMonth,aMes )},,,,.F.,,,.F.,,.F.,,,,,)
+    TBtnBmp():New(3.5,63,11,11,,,,,{|Self|(MoveCalendar(oDlg,3,,aMes ))},,,,.F.,.F.,"-",,,,!.F.,)
+    TBtnBmp():New(3.5,105,11,11,,,,,{|Self|(MoveCalendar(oDlg,4,,aMes ))},,,,.F.,.F.,"+",,,,!.F.,)
+
+    TGet():New(0.2,9.3,{ | u | If(PCount()==0,nYear,nYear:= u ) },oDlg,31,12,,,,,,.F.,,.F.,,.F.,,.F.,.F.,,.F.,.f.,.f.,,.F.,,,,)
+   ATail(oDlg:aControls ):Cargo = "YEAR"
+
+    TSay():New(1.1,(35 - LEN(cFechaLarga )) / 4.8,{||cFechaLarga},,,,.F.,.F.,.F.,.F.,16711680,,,,.F.,.F.,.F.,.F.,.F. )
+   ATail(oDlg:aControls ):Cargo = "DATE"
+
+    TSay():New(2,1,{||"Dom   Lun   Mar   Mie   Jue    Vie   Sab"},,,,.F.,.F.,.F.,.F.,255,,,,.F.,.F.,.F.,.F.,.F. )
+
+   FOR nRow = 2 TO 7
+      FOR nCol = 1 TO 7
+
+
+          TBtnBmp():New((nRow * 10) + 20,(nCol * 16 ) - 6,12,12,,,,,{|Self|(oDlg:Cargo := ::Cargo,oDlg:End(1 ) )},,,,.F.,.F.,STR(DAY(dWork ),2 ),,,,!.T.,)
+
+         ATail(oDlg:aControls ):Cargo = dWork
+
+
+         ATail(oDlg:aControls ):nClrText = If(dWork == Date(),255,If(dWork == dDate,16711680,If(Month(dWork ) == nMonth,0,8421504 ) ) )
+         If ATail(oDlg:aControls ):Cargo == dDate
+            ATail(oDlg:aControls ):lPressed = .t.
+            ATail(oDlg:aControls ):cToolTip = "Seleccionado"
+         ElseIf ATail(oDlg:aControls ):Cargo == Date()
+            ATail(oDlg:aControls ):cToolTip = "Hoy"
+         Else
+            ATail(oDlg:aControls ):cToolTip = DToC(ATail(oDlg:aControls ):Cargo)
+         EndIf
+
+         dWork++
+      NEXT
+   NEXT
+   oDlg:Cargo := dDate
+
+oDlg:Activate(oDlg:bLClicked,oDlg:bMoved,oDlg:bPainted,.T.,,,,oDlg:bRClicked,,)
+
+dSelect := oDlg:Cargo
+If oGet != NIL
+   oGet:VarPut(If(oDlg:nResult == 1,dSelect,dDate ) )
+   oGet:Refresh()
+EndIf
+
+RETURN If(oDlg:nResult == 1,dSelect,dDate )
+
+
+STATIC FUNCTION MoveCalendar(oDlg,nMode,nVar,aMes )
+   LOCAL cFechaLarga,dWork,nDay,nMonth,nYear,n
+   LOCAL dSelect := oDlg:Cargo
+   LOCAL nFirstButton := 0,nLastButton := 0
+   LOCAL nDays := 0
+   LOCAL nDate := 0
+   LOCAL nSkip := 0
+   LOCAL nPDate := 0
+   LOCAL nPYear := 0
+FOR n := 1 TO Len(oDlg:aControls )
+   If oDlg:aControls[ n ]:ClassName() == "TBTNBMP"
+      nFirstButton := If(nFirstButton == 0,If(nSkip<2,0,n),nFirstButton )
+      nLastButton := n
+      nSkip++
+      oDlg:aControls[ n ]:lPressed := .f.
+   EndIf
+   If ValType(oDlg:aControls[ n ]:Cargo ) == "C"
+      If oDlg:aControls[ n ]:Cargo == "DATE"
+         nPDate := n
+      EndIf
+      If oDlg:aControls[ n ]:Cargo == "YEAR"
+         nPYear := n
+      EndIf
+   EndIf
+next
+
+nDay := Day(dSelect )
+nMonth := Month(dSelect )
+nYear := Year(dSelect )
+
+do case
+   case nMode == 1
+      nMonth := nVar
+   case nMode == 3
+      nYear --
+   case nMode == 4
+      nYear ++
+endcase
+If LEFT(NtChr(dSelect,"4" ),2) == STR(nDay,2)
+   nDay := DAY(CTOD(NtChr(CTOD("01."+STRZERO(nMonth,2)+STR(nYear)),"4" )))
+EndIf
+
+
+dSelect := TToD(padl(nDay,2) + "/" + padl(nMonth,2 ) + "/" + right(padl(nYear,4 ),2),"DD/MM/YY" )
+cFechaLarga := dDateToString(dSelect,aMes )
+oDlg:aControls[ nPDate ]:cMsg := cFechaLarga
+oDlg:aControls[ nPYear ]:VarPut(nYear)
+
+dWork := TToD("01/" + padl(nMonth,2 ) + "/" + right(padl(nYear,4 ),2),"DD/MM/YY" )
+while DoW(dWork ) > 1
+   dWork --
+enddo
+
+FOR n := nFirstButton TO nLastButton
+   oDlg:aControls[ n ]:SetText(Str(Day(dWork ),2 ) )
+   oDlg:aControls[ n ]:Cargo = dWork
+
+
+   oDlg:aControls[ n ]:nClrText = If(dWork == Date(),255,If(dWork == dSelect,16711680,If(Month(dWork ) == nMonth,0,8421504 ) ) )
+   oDlg:aControls[ n ]:cToolTip = DToC(dWork)
+   If dWork == dSelect
+      oDlg:aControls[ n ]:lPressed = .t.
+      oDlg:aControls[ n ]:cToolTip = "Seleccionado"
+   EndIf
+   dWork++
+next
+
+FOR n := 1 TO Len(oDlg:aControls )
+   oDlg:aControls[ n ]:Refresh()
+next
+oDlg:Cargo := dSelect
+return nil
+
+
+STATIC FUNCTION dDateToString(dDate,aMes )
+
+   Local aDia := { "Domingo ","Lunes ","Martes ","Miercoles ","Jueves ","Viernes ","Sabado " }
+
+RETURN aDia[Dow( dDate )] + aMes[Month( dDate )] + Str(Day(dDate ),3 ) + ", " + Str(Year(dDate),4)
+
+
+STATIC FUNCTION TToD(cDate,cFormat)
+  LOCAL cDia,cMes,cYear,cLYear
+  LOCAL RetDate
+  LOCAL cClipFormat := UPPER(SET(4))
+  LOCAL nEPOCH := SET(5)
+
+IF VALTYPE(cFormat) != "C"
+   cFormat := "MM/DD/YY"
+ENDIF
+IF EMPTY(cDate)
+   RetDate := CTOD("")
+ELSE
+   IF ("YYYY" $ cFormat)
+      cLYear := PADR(VAL(SUBSTR(cDate,AT("YYYY",cFormat),4 )),4,"0")
+      cYear := PADL(VAL(RIGHT(cLYear,2)),2,"0")
+   ELSEIF ("YY" $ cFormat)
+      cYear := PADL(VAL(SUBSTR(cDate,AT("YY",cFormat),2 )),2,"0")
+      IF VAL("19" + cYear) > nEPOCH
+         cLYear := "19" + cYear
+      ELSE
+         cLYear := "20" + cYear
+      ENDIF
+   ENDIF
+   IF ("MM" $ cFormat)
+      cMes := PADL(ALLTRIM(SUBSTR(cDate,AT("MM",cFormat),2 )),2,"0")
+   ENDIF
+   IF ("DD" $ cFormat)
+      cDia := PADL(ALLTRIM(SUBSTR(cDate,AT("DD",cFormat),2 )),2,"0")
+   ENDIF
+
+   IF ("YYYY" $ cClipFormat)
+      cClipFormat := LEFT(cClipFormat,AT("YYYY",cClipFormat) - 1 ) + cLYear + SUBSTR(cClipFormat,AT("YYYY",cClipFormat) + 4 )
+   ELSEIF ("YY" $ cClipFormat)
+       cClipFormat := LEFT(cClipFormat,AT("YY",cClipFormat) - 1 ) + cYear + SUBSTR(cClipFormat,AT("YY",cClipFormat) + 2 )
+   ENDIF
+   IF ("MM" $ cClipFormat)
+      cClipFormat := LEFT(cClipFormat,AT("MM",cClipFormat) - 1 ) + cMes + SUBSTR(cClipFormat,AT("MM",cClipFormat) + 2 )
+   ENDIF
+   IF ("DD" $ cClipFormat)
+      cClipFormat := LEFT(cClipFormat,AT("DD",cClipFormat) - 1 ) + cDia + SUBSTR(cClipFormat,AT("DD",cClipFormat) + 2 )
+   ENDIF
+   RetDate := CTOD(cClipFormat)
+ENDIF
+RETURN (RetDate)
