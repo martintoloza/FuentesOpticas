@@ -1431,7 +1431,16 @@ If lOk
          ::Servicios( aL,0 )
       EndIf
       If !aL[20] .AND. !aL[21,1]
-         ::aM[19] := If( nTerm >= 2 .AND. nMate == 1, "56", "57" )
+         If RIGHT( aTipo[nTipo,7],4 ) == "OPTI"
+            ::aM[19] := ::aCla[nMate,2] + aTipo[nTipo,2]
+            If Rango( ::aM[19],{"011","021","611"} )
+               ::aM[19] := If( nTerm = 1 .AND. ::aM[19] == "611", "XX", "58" )
+            Else
+               ::aM[19] := "XX"
+            EndIf
+         Else
+            ::aM[19] := If( nTerm >= 2 .AND. nMate == 1, "56", "57" )
+         EndIf
          nA    := ASCAN( ::aSRV, {|aVal| aVal[3] == ::aM[19]} )
          bServ := ::SinServic( aL,::aM[19],nA )
          aL[13]+= bServ[2]
@@ -1592,8 +1601,12 @@ If cSer # NIL
           "' AND tiposer = '" + cSer + "'"
    aPC := Buscar( cSer,"CM",,8 )
    If LEN( aPC ) == 0
-      aPC := { ::aSrv[nAt,6],::aSrv[nAt,7],0 }
-               //valunidad  ,  pcosto
+      If nAt == 0
+         aPC := { 0,0,0 }
+      Else
+         aPC := { ::aSrv[nAt,6],::aSrv[nAt,7],0 }
+                  //valunidad  ,  pcosto
+      EndIf
    EndIf
 Else
    If !EMPTY(::aV[nAt,14])
