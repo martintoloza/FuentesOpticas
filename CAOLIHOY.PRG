@@ -55,7 +55,8 @@ WHERE c.optica = p.optica
   AND h.nroiden    = '810114'
 ORDER BY c.numero, c.numfac
 */
-cQry := "SELECT c.numero, c.numfac, p.rcaja, p.fecha, p.pagado, p.formapago, p.numcheque "+;
+cQry := "SELECT c.numero, c.numfac, p.rcaja, p.fecha, p.pagado - IFNULL(p.p_de_mas,0)"+;
+             ", p.formapago, p.numcheque "          +;
         "FROM cadantip p, cadantic c , historia h " +;
         "WHERE c.optica = p.optica"                 +;
          " AND c.numero = p.numero"                 +;
@@ -72,7 +73,7 @@ If (nL := MSNumRows( hRes )) > 0
 Else
    aRC  := { 0,0,0,0,1,"" }
 EndIf
-cQry := "SELECT rcaja, fecpag, pagado, formapago, numcheque "+;
+cQry := "SELECT rcaja, fecpag, pagado - IFNULL(p_de_mas,0), formapago, numcheque "+;
         "FROM cadpagos "                             +;
         "WHERE optica = " + LTRIM(STR(oApl:nEmpresa))+;
          " AND numfac = [FAC]"                       +;

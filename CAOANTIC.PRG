@@ -474,10 +474,10 @@ If !::oDb:lOK
    oApl:oFac:CLIENTE := ::oDb:CLIENTE
    While oApl:nSaldo > 0 .AND. ::aM[3] == 0
       If CaoPagos(,,::aPag) .AND. !EMPTY( oApl:oPag:ABONO )
-         nAbono += oApl:oPag:PAGADO
-         nR     := oApl:oPag:ABONO     + oApl:oPag:DEDUCCION +;
-                   oApl:oPag:RETENCION + oApl:oPag:DESCUENTO +;
-                   oApl:oPag:RETIVA    + oApl:oPag:RETICA    + oApl:oPag:RETCRE
+         nAbono += (oApl:oPag:PAGADO    - oApl:oPag:P_DE_MAS)
+         nR     :=  oApl:oPag:ABONO     + oApl:oPag:DEDUCCION +;
+                    oApl:oPag:RETENCION + oApl:oPag:DESCUENTO +;
+                    oApl:oPag:RETIVA    + oApl:oPag:RETICA    + oApl:oPag:RETCRE
          nValor += nR
          oApl:nSaldo -= nR
          AADD( aPago, {oApl:oPag:ABONO    , oApl:oPag:RETENCION,;
@@ -485,7 +485,8 @@ If !::oDb:lOK
                        oApl:oPag:NUMCHEQUE, oApl:oPag:CODBANCO ,;
                        oApl:oPag:FORMAPAGO, oApl:oPag:INDRED   ,;
                        oApl:oPag:PAGADO   , oApl:oPag:RETIVA   ,;
-                       oApl:oPag:RETICA   , oApl:oPag:RETCRE  })
+                       oApl:oPag:RETICA   , oApl:oPag:RETCRE   ,;
+                       oApl:oPag:P_DE_MAS})
       Else
          Exit
       EndIf
@@ -512,7 +513,7 @@ Else
          RETURN NIL
       EndIf
    EndIf
-   nAbono := Buscar( "SELECT SUM(pagado) FROM cadantip "          +;
+   nAbono := Buscar( "SELECT SUM(pagado) - SUM(p_de_mas) FROM cadantip "+;
                      "WHERE optica = " + LTRIM(STR(oApl:nEmpresa))+;
                       " AND numero = " + LTRIM(STR(::aM[2])),"CM",,8 )
    If EMPTY( nAbono )
@@ -577,6 +578,7 @@ If ::oDb:NUMERO # ::aM[2]
       ::oPag:FORMAPAGO := aPago[nR,07]; ::oPag:INDRED    := aPago[nR,08]
       ::oPag:PAGADO    := aPago[nR,09]; ::oPag:RETIVA    := aPago[nR,10]
       ::oPag:RETICA    := aPago[nR,11]; ::oPag:RETCRE    := aPago[nR,12]
+      ::oPag:P_DE_MAS  := aPago[nR,13]
       Guardar( ::oPag,.t.,.f. )
    NEXT
    oApl:nSaldo := ::oDb:TOTALFAC - nValor
@@ -741,7 +743,7 @@ If lBorrar == NIL .OR. lBorrar
       oApl:oPag:CODBANCO  := ::oPag:CODBANCO ; oApl:oPag:FORMAPAGO := ::oPag:FORMAPAGO
       oApl:oPag:INDRED    := ::oPag:INDRED   ; oApl:oPag:PAGADO    := ::oPag:PAGADO
       oApl:oPag:RETIVA    := ::oPag:RETIVA   ; oApl:oPag:RETICA    := ::oPag:RETICA
-      oApl:oPag:RETCRE    := ::oPag:RETCRE
+      oApl:oPag:RETCRE    := ::oPag:RETCRE   ; oApl:oPag:P_DE_MAS  := ::oPag:P_DE_MAS
    ElseIf ::oDb:NUMFAC # 0
       MsgStop( "Anticipo ya esta FACTURADO",">>> OJO <<<" )
       RETURN NIL
@@ -754,15 +756,16 @@ If lBorrar == NIL .OR. lBorrar
          ::oPag:FECHA  := oApl:dFec     ; ::oPag:PORDONDE := "P"
          ::oPag:RCAJA  := RCaja( .t.,::oDb:CODIGO_NIT,oApl:dFec,"A",ALLTRIM(::aM[4]) )
       EndIf
-      nPago            := ::oPag:PAGADO      ; ::oPag:ABONO     := oApl:oPag:ABONO
+      nPago            := ::oPag:PAGADO - ::oPag:P_DE_MAS
+      ::oPag:ABONO     := oApl:oPag:ABONO
       ::oPag:RETENCION := oApl:oPag:RETENCION; ::oPag:DEDUCCION := oApl:oPag:DEDUCCION
       ::oPag:DESCUENTO := oApl:oPag:DESCUENTO; ::oPag:NUMCHEQUE := oApl:oPag:NUMCHEQUE
       ::oPag:CODBANCO  := oApl:oPag:CODBANCO ; ::oPag:FORMAPAGO := oApl:oPag:FORMAPAGO
       ::oPag:INDRED    := oApl:oPag:INDRED   ; ::oPag:PAGADO    := oApl:oPag:PAGADO
       ::oPag:RETIVA    := oApl:oPag:RETIVA   ; ::oPag:RETICA    := oApl:oPag:RETICA
-      ::oPag:RETCRE    := oApl:oPag:RETCRE
+      ::oPag:RETCRE    := oApl:oPag:RETCRE   ; ::oPag:P_DE_MAS  := oApl:oPag:P_DE_MAS
       Guardar( ::oPag,lBorrar,.f. )
-      ::oDb:SALDOFAC   += (nPago - ::oPag:PAGADO)
+      ::oDb:SALDOFAC   += (nPago - ::oPag:PAGADO - ::oPag:P_DE_MAS)
       If ::oDb:SALDOFAC == 0
          ::oDb:INDICADOR := "C" ; ::oDb:FECHACAN := ::oDb:FECHA
       Else
@@ -773,7 +776,7 @@ If lBorrar == NIL .OR. lBorrar
 Else
    If Login( "Quiere Borrar este Pago" )
       If ::oPag:PAGADO # 0 .AND. ::oDb:INDICADOR # "A"
-         ::oDb:SALDOFAC  += ::oPag:PAGADO
+         ::oDb:SALDOFAC  += (::oPag:PAGADO - ::oPag:P_DE_MAS)
          ::oDb:INDICADOR := "P" ; ::oDb:FECHACAN := CTOD("")
          Guardar( ::oDb,.f.,.f. )
       EndIf
@@ -798,19 +801,20 @@ EndIf
 ::oPag:dbEval( {|o| AADD( aPago,{o:ABONO    , o:RETENCION, o:DEDUCCION,;
                                  o:DESCUENTO, o:NUMCHEQUE, o:CODBANCO ,;
                                  o:FORMAPAGO, o:INDRED   , o:PAGADO   ,;
-                                 "A"        , o:RETIVA   , o:RETICA   , o:RETCRE}),;
+                                 "A"        , o:RETIVA   , o:RETICA   ,;
+                                 o:RETCRE   , o:P_DE_MAS} )           ,;
                     nValor += (o:ABONO + o:DEDUCCION  + o:RETENCION +  ;
-                               o:DESCUENTO + o:RETIVA + o:RETICA    + o:RETCRE)   ,;
-                    nAbono += o:PAGADO }                              ,;
+                               o:DESCUENTO + o:RETIVA + o:RETICA    + o:RETCRE),;
+                    nAbono += (o:PAGADO - o:P_DE_MAS) }                        ,;
                {"optica",oApl:nEmpresa,"numero",::oDb:NUMERO} )
 oApl:nSaldo := ::oDb:TOTALFAC - nValor
 oApl:oFac:Seek( {"optica",oApl:nEmpresa,"numfac",0,"tipo",oApl:Tipo} )
 While oApl:nSaldo > 0
    If CaoPagos(,,::aPag) .AND. !EMPTY( oApl:oPag:ABONO )
-      nAbono += oApl:oPag:PAGADO
-      nPago  := oApl:oPag:ABONO     + oApl:oPag:DEDUCCION +;
-                oApl:oPag:RETENCION + oApl:oPag:DESCUENTO +;
-                oApl:oPag:RETIVA    + oApl:oPag:RETICA    + oApl:oPag:RETCRE
+      nAbono += (oApl:oPag:PAGADO    - oApl:oPag:P_DE_MAS)
+      nPago  :=  oApl:oPag:ABONO     + oApl:oPag:DEDUCCION +;
+                 oApl:oPag:RETENCION + oApl:oPag:DESCUENTO +;
+                 oApl:oPag:RETIVA    + oApl:oPag:RETICA    + oApl:oPag:RETCRE
       nValor += nPago
       oApl:nSaldo -= nPago
       AADD( aPago, {oApl:oPag:ABONO    , oApl:oPag:RETENCION,;
@@ -818,7 +822,8 @@ While oApl:nSaldo > 0
                     oApl:oPag:NUMCHEQUE, oApl:oPag:CODBANCO ,;
                     oApl:oPag:FORMAPAGO, oApl:oPag:INDRED   ,;
                     oApl:oPag:PAGADO   , "F"                ,;
-                    oApl:oPag:RETIVA   , oApl:oPag:RETICA   , oApl:oPag:RETCRE})
+                    oApl:oPag:RETIVA   , oApl:oPag:RETICA   ,;
+                    oApl:oPag:RETCRE   , oApl:oPag:P_DE_MAS})
    Else
       Exit
    EndIf
@@ -901,7 +906,7 @@ EndIf
     oApl:oPag:FORMAPAGO := aPago[nR,07]; oApl:oPag:INDRED    := aPago[nR,8]
     oApl:oPag:PAGADO    := aPago[nR,09]; oApl:oPag:PORDONDE  := aPago[nR,10]
     oApl:oPag:RETIVA    := aPago[nR,11]; oApl:oPag:RETICA    := aPago[nR,12]
-    oApl:oPag:RETCRE    := aPago[nR,13]
+    oApl:oPag:RETCRE    := aPago[nR,13]; oApl:oPag:P_DE_MAS  := aPago[nR,14]
     Guardar( oApl:oPag,.t.,.f. )
  NEXT
  oApl:nSaldo := oApl:oFac:TOTALFAC - nValor

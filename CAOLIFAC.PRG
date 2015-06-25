@@ -482,8 +482,8 @@ If lFin
    UTILPRN ::oUtil  9.9,18.5 SAY TRANSFORM( oApl:oFac:TOTALIVA,   "9,999,999" ) RIGHT
    UTILPRN ::oUtil  9.9,20.5 SAY TRANSFORM( oApl:oFac:TOTALFAC,  "99,999,999" ) RIGHT
 
-   aP   := "SELECT p.formapago, p.pagado, p.descuento, p.deduccion + p.retencion +"+;
-           " IFNULL(p.retiva,0) + IFNULL(p.retica,0), p.numcheque, b.nombre "      +;
+   aP   := "SELECT p.formapago, p.pagado - IFNULL(p.p_de_mas,0), p.descuento, p.deduccion + "    +;
+                  "p.retencion + IFNULL(p.retiva,0) + IFNULL(p.retica,0), p.numcheque, b.nombre "+;
            "FROM cadpagos p LEFT JOIN cadbanco b"         +;
              " ON p.codbanco = b.codigo "                 +;
            "WHERE p.optica = " + LTRIM(STR(oApl:nEmpresa))+;

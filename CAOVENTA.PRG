@@ -847,10 +847,10 @@ If !oApl:oFac:lOK
    oApl:nSaldo := If( oApl:Tipo == "Z", 0, oApl:oFac:TOTALFAC ) // .OR. ::aM[3] > 0
    While oApl:lEnLinea .AND. oApl:nSaldo > 0
       If CaoPagos(,,::aPag) .AND. !EMPTY( oApl:oPag:ABONO )
-         nAbono += oApl:oPag:PAGADO
-         nPago  := oApl:oPag:ABONO     + oApl:oPag:DEDUCCION +;
-                   oApl:oPag:RETENCION + oApl:oPag:DESCUENTO +;
-                   oApl:oPag:RETIVA    + oApl:oPag:RETICA    + oApl:oPag:RETCRE
+         nAbono += (oApl:oPag:PAGADO    - oApl:oPag:P_DE_MAS)
+         nPago  :=  oApl:oPag:ABONO     + oApl:oPag:DEDUCCION +;
+                    oApl:oPag:RETENCION + oApl:oPag:DESCUENTO +;
+                    oApl:oPag:RETIVA    + oApl:oPag:RETICA    + oApl:oPag:RETCRE
          nValor += nPago
          oApl:nSaldo -= nPago
          AADD( aPago, { oApl:oPag:ABONO    , oApl:oPag:RETENCION,;
@@ -858,7 +858,8 @@ If !oApl:oFac:lOK
                         oApl:oPag:NUMCHEQUE, oApl:oPag:CODBANCO ,;
                         oApl:oPag:FORMAPAGO, oApl:oPag:INDRED   ,;
                         oApl:oPag:PAGADO   , oApl:oPag:RETIVA   ,;
-                        oApl:oPag:RETICA   , oApl:oPag:RETCRE })
+                        oApl:oPag:RETICA   , oApl:oPag:RETCRE   ,;
+                        oApl:oPag:P_DE_MAS })
       Else
          Exit
       EndIf
@@ -974,6 +975,7 @@ If oApl:lEnLinea .AND. oApl:oFac:NUMFAC # ::aM[2] .AND. oApl:Tipo # "Z"
       oApl:oPag:FORMAPAGO := aPago[nR,07]; oApl:oPag:INDRED    := aPago[nR,08]
       oApl:oPag:PAGADO    := aPago[nR,09]; oApl:oPag:RETIVA    := aPago[nR,10]
       oApl:oPag:RETICA    := aPago[nR,11]; oApl:oPag:RETCRE    := aPago[nR,12]
+      oApl:oPag:P_DE_MAS  := aPago[nR,13]
       Guardar( oApl:oPag,.t.,.f. )
    NEXT
    oApl:nSaldo := oApl:oFac:TOTALFAC - nValor
@@ -1114,7 +1116,7 @@ If VALTYPE( oLbx ) # "C"
             Guardar( oApl:oFac,.f.,.f. )
             oApl:cPer := NtChr( oApl:oPag:FECPAG,"1" )
             oApl:lFam := SaldoFac( oApl:oPag:NUMFAC )
-            GrabaSal( oApl:oPag:NUMFAC,1,-oApl:oPag:PAGADO )
+            GrabaSal( oApl:oPag:NUMFAC,1,-(oApl:oPag:PAGADO-oApl:oPag:P_DE_MAS) )
             oApl:cPer := NtChr( oApl:dFec,"1" )
          EndIf
          oApl:oPag:Delete(.f.,1)

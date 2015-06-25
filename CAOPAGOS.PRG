@@ -46,7 +46,7 @@ Else
       oApl:cPer := NtChr( oApl:oPag:FECPAG,"1" )
       oApl:lFam := SaldoFac( oApl:oPag:NUMFAC )
    EndIf
-   aP[6]       := oApl:oPag:PAGADO
+   aP[6]       := oApl:oPag:PAGADO - oApl:oPag:P_DE_MAS
    oApl:nSaldo += aP[6]
    If (aP[7] := Rango( oApl:oPag:FORMAPAGO,2,3 ))
       oApl:oPag:ABONO     += oApl:oPag:DEDUCCION
@@ -122,6 +122,10 @@ DEFINE DIALOG oDlg TITLE "Pagos a Facturas de " + ArrayValor( oApl:aOptic,STR(oA
    @  98, 52 GET oGet[07] VAR oApl:oPag:DESCUENTO OF oDlg PICTURE aP[4];
       VALID EVAL( bSumar,oApl:oPag:DESCUENTO ) ;
       WHEN nFPag  # 5 SIZE 40,10 PIXEL UPDATE
+   @  98, 94 SAY "Pagado de MAS" OF oDlg RIGHT PIXEL SIZE 36,10
+   @  98, 52 GET oGet[17] VAR oApl:oPag:P_DE_MAS OF oDlg PICTURE aP[4];
+      VALID EVAL( bSumar,oApl:oPag:P_DE_MAS ) ;
+      WHEN nFPag  # 5 SIZE 40,10 PIXEL UPDATE
    @ 110, 00 SAY "Ret.ICA"       OF oDlg RIGHT PIXEL SIZE 50,10
    @ 110, 52 GET oGet[08] VAR oApl:oPag:RETICA    OF oDlg PICTURE aP[4];
       VALID EVAL( bSumar,oApl:oPag:RETICA ) ;
@@ -186,7 +190,8 @@ If nPorT # NIL
    EndIf
 ElseIf nPago > 0
    If (lOk := MsgYesNo( "Graba este Pago" ))
-      If nPago > oApl:nSaldo
+      nAbono := nPago - oApl:oPag:P_DE_MAS
+      If nAbono > oApl:nSaldo
          lOk := MsgNoYes( "Desea Continuar","Pago Mayor que el Saldo" )
       EndIf
    EndIf
@@ -233,7 +238,8 @@ RETURN lOk
 
 //------------------------------------//
 PROCEDURE GrabaPago( lNuevo,nPagado )
-   LOCAL aCan := { "P",CTOD("") }, nPago := oApl:oPag:PAGADO
+   LOCAL aCan := { "P",CTOD("") }, nPago
+   nPago := oApl:oPag:PAGADO - oApl:oPag:P_DE_MAS
 If lNuevo
    oApl:oPag:OPTICA    := oApl:nEmpresa ; oApl:oPag:NUMFAC   := oApl:oFac:NUMFAC
    oApl:oPag:TIPO      := oApl:Tipo     ; oApl:oPag:PORDONDE := "P"

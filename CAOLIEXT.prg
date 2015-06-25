@@ -81,8 +81,9 @@ While nL > 0
          oExt:CREDITOS := If( oExt:VALOR < 0, oApl:oPag:PAGADO, 0 )
       Else
          oExt:CLIENTE  := aPago[oApl:oPag:FORMAPAGO+1] + oApl:oPag:CODBANCO
-         oExt:CREDITOS := oApl:oPag:ABONO     + oApl:oPag:RETENCION + ;
-                          oApl:oPag:DEDUCCION + oApl:oPag:DESCUENTO //Pag->Pagado
+         oExt:CREDITOS := oApl:oPag:PAGADO    - oApl:oPag:P_DE_MAS
+       //oExt:CREDITOS := oApl:oPag:ABONO     + oApl:oPag:RETENCION + ;
+       //                 oApl:oPag:DEDUCCION + oApl:oPag:DESCUENTO
          oExt:VALOR    := -oExt:CREDITOS
       EndIf
          oExt:Insert()

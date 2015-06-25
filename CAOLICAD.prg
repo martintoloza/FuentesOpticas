@@ -284,25 +284,23 @@ RETURN NIL
 //------------------------------------//
 METHOD ArmarINF( aRes ) CLASS CDiarias
 If aRes == "Diaria"
-   aRes := "SELECT p.numfac FAC, p.fecpag FECHA, p.abono, p.deduccion, p.descuento, p.retencion + "+;
-                  "IFNULL(p.retiva,0) + IFNULL(p.retica,0) + IFNULL(p.retcre,0), p.pagado, "+;
-                  "p.formapago, p.indicador, p.pordonde, u.cliente, u.codigo_nit, p.indred "+;
+   aRes := "SELECT p.numfac FAC, p.fecpag FECHA, p.abono, p.deduccion, p.descuento, "          +;
+                  "p.retencion + IFNULL(p.retiva,0) + IFNULL(p.retica,0) + IFNULL(p.retcre,0) "+;
+                ", p.pagado, p.formapago, p.indicador, p.pordonde, u.cliente, u.codigo_nit, "  +;
+                  "p.indred, p.p_de_mas "                  +;
            "FROM cadpagos p LEFT JOIN cadfactu u "         +;
              "USING(optica, numfac, tipo) "                +;
-           "WHERE p.optica = "  + LTRIM(STR(oApl:nEmpresa))+;
+           "WHERE p.optica  = " + LTRIM(STR(oApl:nEmpresa))+;
             " AND p.fecpag >= " + xValToChar( ::aLS[1] )   +;
             " AND p.fecpag <= " + xValToChar( ::aLS[2] )   +;
             " AND p.tipo = "    + xValToChar(oApl:Tipo)    +;
             " AND p.formapago <= 4 AND p.indicador <> 'A'" +;
             " AND p.pordonde "  + ::aCD[10]                +;
             " ORDER BY FECHA, FAC"
-//         "FROM cadfactu u, cadpagos p "                  +;
-//         "WHERE p.optica = u.optica"                     +;
-//          " AND p.numfac = u.numfac AND p.tipo = u.tipo" +;
 ElseIf aRes == "Antici"
    aRes := "SELECT p.numero FAC, p.fecha, p.abono, p.deduccion, p.descuento, p.retencion + "+;
                   "IFNULL(p.retiva,0) + IFNULL(p.retica,0) + IFNULL(p.retcre,0), p.pagado, "+;
-                  "p.formapago, c.saldofac, p.pordonde, c.cliente, c.codigo_nit, p.indred " +;
+                  "p.formapago, c.saldofac, p.pordonde, c.cliente, c.codigo_nit, p.indred, p.p_de_mas " +;
            "FROM cadantic c, cadantip p "                     +;
            "WHERE p.optica = c.optica AND p.numero = c.numero"+;
             " AND p.optica = " + LTRIM(STR(oApl:nEmpresa))    +;
@@ -394,7 +392,7 @@ METHOD ArmarPAG( aRes,nK ) CLASS CDiarias
 
  AFILL( ::aCD,0,1,5 )
  ::aCD[6] := aRes[4] + aRes[5]
- ::aCD[7] := aRes[3] + aRes[6] + ::aCD[6]
+ ::aCD[7] := aRes[3] + aRes[6] + aRes[14] + ::aCD[6]
  If aRes[8] >= 2 .AND. aRes[8] <= 3
     If aRes[7] == ::aCD[7]
        ::aCD[3] := ::aCD[7]          //[3]Tarj. Debito
@@ -418,6 +416,7 @@ METHOD ArmarPAG( aRes,nK ) CLASS CDiarias
     EndIf
        ::aCD[nK] := aRes[3] + If( aRes[10] == "F", ::aCD[6], 0 )
  EndIf
+ ::aCD[5] += aRes[14]
 RETURN NIL
 
 //------------------------------------//

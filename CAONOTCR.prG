@@ -442,14 +442,14 @@ METHOD BuscarP( nMTL,nVal ) CLASS TNotasc
    LOCAL xPG, hRes, nL, oDlg, oGet
 If nMTL <= 1
    If ::oDb:CLASE <= 2
-      xPG := "SELECT pagado, deduccion, descuento, formapago "+;
+      xPG := "SELECT pagado - IFNULL(p_de_mas,0), deduccion, descuento, formapago "+;
              "FROM cadpagos "                                 +;
              "WHERE optica = " + LTRIM(STR(oApl:nEmpresa))    +;
               " AND numfac = " + LTRIM(STR(::oDb:NUMFAC))     +;
               " AND tipo   = " + xValToChar( oApl:Tipo )      +;
               " AND formapago <= 4"
    ElseIf ::oDb:CLASE == 5
-      xPG := "SELECT pagado, deduccion, descuento, formapago "+;
+      xPG := "SELECT pagado - IFNULL(p_de_mas,0), deduccion, descuento, formapago "+;
              "FROM cadantip "                                 +;
              "WHERE optica = " + LTRIM(STR(oApl:nEmpresa))    +;
               " AND numero = " + LTRIM(STR(::oDb:NUMFAC))     +;

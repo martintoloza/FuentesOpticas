@@ -435,7 +435,7 @@ Else
             " AND c.optica = u.optica AND c.numero = u.remplaza"
    MSQuery( oApl:oMySql:hConnect,cQry )
 EndIf
-cQry := "SELECT numfac, fecpag, pagado, tipo FROM cadpagos "+;
+cQry := "SELECT numfac, fecpag, pagado-IFNULL(p.p_de_mas,0), tipo FROM cadpagos "+;
         "WHERE optica  = "  + LTRIM(STR( aTin[1]))+;
          " AND fecpag >= " + xValToChar( aTin[2] )+;
          " AND fecpag <= " + xValToChar( aTin[3] )+;
@@ -589,7 +589,8 @@ While !Tmp->(EOF())
    oApl:oPag:DESCUENTO := Tmp->DESCUENTO ; oApl:oPag:NUMCHEQUE := Tmp->NUMCHEQUE
    oApl:oPag:CODBANCO  := Tmp->CODBANCO  ; oApl:oPag:FORMAPAGO := Tmp->FORMAPAGO
    oApl:oPag:INDICADOR := Tmp->INDICADOR ; oApl:oPag:INDRED    := Tmp->INDRED
-   oApl:oPag:PORDONDE  := Tmp->PORDONDE  ; oApl:oPag:Append()
+   oApl:oPag:PORDONDE  := Tmp->PORDONDE  ; oApl:oPag:P_DE_MAS  := Tmp->P_DE_MAS
+   oApl:oPag:Append()
    oApl:Tipo := Tmp->TIPO
    ::GrabaFac( Tmp->NUMFAC,Tmp->FECPAG,Tmp->PAGADO,Tmp->FORMAPAGO )
    Tmp->(dbSkip())

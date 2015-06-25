@@ -1093,7 +1093,8 @@ aCT  := { {  ::aLS[2],"","","","",0,nE,0,0,oApl:oEmp:SUCURSAL,0 },;
           {"13802011","800219876","","","",3542,0,0,0 },;
           {"53051501","","","","",0,0,0 }  ,{"53053501","","","","",0,0,0 }  ,;
           {"28050501", "28050501","","","",7046,0,0,0 },;
-          {"28050501","","","","",0,0,0,0 },{"13050502","","","","",0,0,0 } }
+          {"28050501","","","","",0,0,0,0 },{"13050502","","","","",0,0,0 }  ,;
+          {"42950501","","","","",0,0,0 } }
 If ::aLS[2] >= CTOD("11.02.2008") .AND. Rango( oApl:nEmpresa,{44,51,52} )
     aCT[2,1] := "13102001"    //CFM, SAO
     aGT[1,8] := If( oApl:nEmpresa == 44, 890101994, 890107487 )
@@ -1106,12 +1107,13 @@ EndIf
 ::BuscaNit( @aGT,1 )
 aCT[2,2] := LTRIM( STR(aGT[1,8]) ) ; aCT[2,6] := aGT[1,9]
 ::BuscaNit( @aGT,"NIT" )
-aCT[5,2] := aCT[6,2] := ::aCC[1]
-aCT[5,6] := aCT[6,6] := ::aCC[2]
+aCT[5,2] := aCT[6,2] := aCT[10,2] := ::aCC[1]
+aCT[5,6] := aCT[6,6] := aCT[10,6] := ::aCC[2]
 nE   := If( oApl:nEmpresa == 21, 18, oApl:nEmpresa )
-aLC  := { "SELECT p.codbanco, p.abono, p.retencion, p.retiva, p.retica, "+;
-          "p.deduccion, p.descuento, p.pordonde, p.formapago, p.indred, "+;
-          "p.numcheque, c.codigo_nit, c.cliente, c.direcc, c.codigo_cli, p.retcre "+;
+aLC  := { "SELECT p.codbanco, p.abono, p.retencion, p.retiva, p.retica"+;
+               ", p.deduccion, p.descuento, p.pordonde, p.formapago, " +;
+                 "p.indred, p.numcheque, c.codigo_nit, c.cliente, "    +;
+                 "c.direcc, c.codigo_cli, p.retcre, p.p_de_mas "       +;
           "FROM cadantip p, cadantic c "                 +;
           "WHERE p.optica = " + LTRIM(STR(oApl:nEmpresa))+;
            " AND p.rcaja  = [RCAJA]"                     +;
@@ -1214,6 +1216,7 @@ While nL > 0
             EndIf
                aGT[6 ,7] += aPG[nC,6]  //Descuentos
                aGT[9 ,8] += aGT[1 ,6]  //13050502
+               aGT[10,8] += aPG[nC,17] //Aprovechamiento
          EndIf
       Else
          If aPG[nC,8] # "A"

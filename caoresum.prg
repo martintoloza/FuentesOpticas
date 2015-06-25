@@ -110,15 +110,16 @@ If aVt[2] == "D"
    oRpt:NewPage()
    oRpt:End() ; RETURN
 EndIf
-cQry := "SELECT formapago, pagado, abono, deduccion, descuento, retencion + IFNULL(retiva,0) +"+;
-        " IFNULL(retica,0) + IFNULL(retcre,0), indicador, indred, 0 FROM cadpagos "+;
-        "WHERE optica = " + LTRIM(STR(oApl:nEmpresa)) +;
+cQry := "SELECT formapago, pagado - IFNULL(p_de_mas,0), abono, deduccion, descuento, retencion + "+;
+        "IFNULL(retiva,0) + IFNULL(retica,0) + IFNULL(retcre,0), indicador, indred, 0 "           +;
+        "FROM cadpagos "                              +;
+        "WHERE optica  = "+ LTRIM(STR(oApl:nEmpresa)) +;
          " AND fecpag >= "+ xValToChar( aLS[1] )      +;
          " AND fecpag <= "+ xValToChar( aLS[2] )      +;
          " AND tipo   = " + xValToChar( oApl:Tipo )   +;
          " AND indicador <> 'A' UNION ALL "           +;
-        "SELECT formapago, pagado, abono, deduccion, descuento, retencion + IFNULL(retiva,0) +"+;
-        " IFNULL(retica,0) + IFNULL(retcre,0), 'T', indred, 1 FROM cadantip " +;
+        "SELECT formapago, pagado - IFNULL(p_de_mas,0), abono, deduccion, descuento, retencion + "+;
+        "IFNULL(retiva,0) + IFNULL(retica,0) + IFNULL(retcre,0), 'T', indred, 1 FROM cadantip "   +;
         "WHERE optica = " + LTRIM(STR(oApl:nEmpresa)) +;
          " AND fecha >= " + xValToChar( aLS[1] )      +;
          " AND fecha <= " + xValToChar( aLS[2] )
@@ -183,10 +184,10 @@ aLS[04] := If( aLS[06] > 0, aLS[06], aLS[04] )
 aLS[07] -= aLS[11]
 aLS[06] := aLS[04] - aLS[07] + aLS[10]
 If ABS( aLS[05] ) # ABS( aLS[06] )
-   oRpt:Say( oRpt:nL++,01," Fac" + STR(nNumfac)+ " Ant" +;
-              TRANSFORM( aLS[04],"999,999,999" ) + " Act" +;
-              TRANSFORM( aLS[05],"999,999,999" ) + " Mov" +;
-              TRANSFORM( aLS[06],"999,999,999" ) + cIndica,,,1 )
+   oRpt:Say( oRpt:nL++,01," Fac" + STR(nNumfac) + " Ant" +;
+             TRANSFORM( aLS[04],"999,999,999" ) + " Act" +;
+             TRANSFORM( aLS[05],"999,999,999" ) + " Mov" +;
+             TRANSFORM( aLS[06],"999,999,999" ) + cIndica,,,1 )
    aLS[7] -= If( oApl:lFam, oApl:oFam:ABONOS, 0 )
    If aLS[14] .AND. aLS[07] > 0
       GrabaSal( nNumfac,1,aLS[07] )

@@ -192,12 +192,13 @@ METHOD ArmarINF( aRes ) CLASS VDiarias
 If aRes == "Diaria"
    aRes := "SELECT u.fechoy, u.numfac, u.orden, u.cliente, u.gaveta, "   +;
                   "u.totalfac, u.indicador, p.abono, p.retencion + "     +;
-           "IFNULL(p.retiva,0) + IFNULL(p.retica,0) + IFNULL(p.retcre,0),"+;
-             " p.deduccion, p.descuento, p.pagado, p.formapago, p.indred "+;
-           "FROM cadfactu u LEFT JOIN cadpagos p ON u.optica = p.optica AND "+;
-                 "u.numfac = p.numfac AND u.tipo = p.tipo AND "+;
-                 "p.pordonde = 'F' AND p.indicador <> 'A' "    +;
-           "WHERE u.optica = "  + LTRIM(STR(oApl:nEmpresa))+;
+           "IFNULL(p.retiva,0) + IFNULL(p.retica,0) + IFNULL(p.retcre,0)"+;
+                ", p.deduccion, p.descuento, p.pagado, p.formapago "     +;
+                ", p.indred, p.p_de_mas "                                +;
+           "FROM cadfactu u LEFT JOIN cadpagos p ON u.optica = p.optica "+;
+             "AND u.numfac = p.numfac AND u.tipo = p.tipo "+;
+             "AND p.pordonde = 'F' AND p.indicador <> 'A' "+;
+           "WHERE u.optica  = " + LTRIM(STR(oApl:nEmpresa))+;
             " AND u.fechoy >= " + xValToChar( ::aLS[1] )   +;
             " AND u.fechoy <= " + xValToChar( ::aLS[2] )   +;
             " AND u.tipo   = "  + xValToChar(oApl:Tipo)    +;
@@ -206,7 +207,8 @@ ElseIf aRes == "Antici"
    aRes := "SELECT c.saldofac, c.numero, c.orden, c.cliente, c.gaveta, " +;
                   "c.totalfac, c.indicador, p.abono, p.retencion + "     +;
            "IFNULL(p.retiva,0) + IFNULL(p.retica,0) + IFNULL(p.retcre,0)"+;
-           ", p.deduccion, p.descuento, p.pagado, p.formapago, p.indred "+;
+                ", p.deduccion, p.descuento, p.pagado, p.formapago "     +;
+                ", p.indred, p.p_de_mas "                                +;
            "FROM cadantic c LEFT JOIN cadantip p ON c.optica = p.optica "+;
              "AND c.numero = p.numero AND p.pordonde = 'F' "             +;
            "WHERE c.optica = " + LTRIM(STR(oApl:nEmpresa))+;
@@ -223,8 +225,8 @@ ElseIf aRes == "Anular"
             " AND indicador = 'A' ORDER BY numfac"
    ::aEnc[4] := "LISTADO DE FACTURAS ANULADAS"
 ElseIf aRes == "Resume"
-   aRes := "SELECT abono, deduccion, descuento, retencion, codbanco, numcheque, numfac"+;
-                ", pagado, formapago, indred, retiva, retica, retcre, pordonde "       +;
+   aRes := "SELECT abono, deduccion, descuento, retencion, codbanco, numcheque, numfac"   +;
+                ", pagado, formapago, indred, retiva, retica, retcre, pordonde, p_de_mas "+;
            "FROM cadpagos "  +;
            "WHERE optica = " + LTRIM(STR(oApl:nEmpresa))  +;
             " AND fecpag = " + xValToChar( ::aLS[1] )     +;
@@ -232,7 +234,7 @@ ElseIf aRes == "Resume"
             " AND formapago <= 4 AND indicador <> 'A' "   +;
             " UNION ALL "                                 +;
            "SELECT abono, deduccion, descuento, retencion, codbanco, numcheque, numero"+;
-                ", pagado, formapago, indred, retiva, retica, retcre, 'X' "            +;
+                ", pagado, formapago, indred, retiva, retica, retcre, 'X', p_de_mas "  +;
            "FROM cadantip "  +;
            "WHERE optica = " + LTRIM(STR(oApl:nEmpresa))  +;
             " AND fecha  = " + xValToChar( ::aLS[1] )     +;
@@ -268,7 +270,7 @@ If cTipo == NIL
    If aRes[7] # "A"
       ::aPG[6] += (aRes[10] + aRes[11])
       ::aPG[7] +=  aRes[09]
-      ::aPG[8] :=  aRes[08] + aRes[09] + aRes[10] + aRes[11]
+      ::aPG[8] :=  aRes[08] + aRes[09] + aRes[10] + aRes[11] + aRes[15]
       If aRes[13] == 3                 // Tarj. Credito
          If STR(aRes[12],10,2) == STR(::aPG[8],10,2)
             ::aPG[03] += ::aPG[8]
@@ -288,6 +290,9 @@ If cTipo == NIL
          EndIf
          ::aPG[nK]+= ::aPG[8]
       EndIf
+      If aRes[15] > 0
+         ::aPG[05]+= aRes[15] //P_DE_MAS
+      EndIf
    EndIf
 Else
    AFILL( ::aPG,0 )
@@ -299,9 +304,10 @@ Else
    oApl:oPag:Seek( {"optica",oApl:nEmpresa,"numfac",aRes[6],"tipo",cTipo,;
                     "formapago <= ",4,"pordonde","F"} )
    While !oApl:oPag:Eof()
+      ::aPG[5] +=  oApl:oPag:P_DE_MAS
       ::aPG[6] += (oApl:oPag:DEDUCCION + oApl:oPag:DESCUENTO)
       aRes[6] := oApl:oPag:ABONO + oApl:oPag:RETENCION + oApl:oPag:DEDUCCION +;
-                 oApl:oPag:DESCUENTO
+                 oApl:oPag:DESCUENTO + oApl:oPag:P_DE_MAS
       If oApl:oPag:FORMAPAGO == 3                 // Tarj. Credito
          If oApl:oPag:PAGADO == aRes[6]
             ::aPG[3] += aRes[6]
@@ -536,7 +542,7 @@ METHOD ResumDOS() CLASS VDiarias
    LOCAL aRes, cQry, oRpt, nK, nFormaP := 0
  aRes  := ::ArmarINF( "Resume" )
  ::aTG := { 0,0,0,0,0,0,0,"CHEQUES            :","TARJETAS DEBITO    :",;
-           "TARJETAS DE CREDITO:","OTROS PAGOS (BONOS):",0,0,0,0,0,0,0 }
+           "TARJETAS DE CREDITO:","OTROS PAGOS (BONOS):",0,0,0,0,0,0,0,0 }
  ::aPG := {}
 oRpt := TDosPrint()
 oRpt:New( oApl:cPuerto,oApl:cImpres,{::aEnc[4],::aEnc[5]},::aLS[5],1,2 )
@@ -557,6 +563,7 @@ While ::nL > 0
    If aRes[14] == "A"
        ::aTG[17] += aRes[8]
    Else
+      aRes[1] += aRes[15]
       If nFormaP # 0 .AND. nFormaP == aRes[9]
          If aRes[9] >= 2 .AND. aRes[9] <= 3
             nK := aRes[8] -  aRes[3]
@@ -604,6 +611,7 @@ While ::nL > 0
       ::aTG[14] +=  aRes[11]
       ::aTG[15] +=  aRes[12]
       ::aTG[16] +=  aRes[13]
+      ::aTG[19] +=  aRes[15]
    EndIf
    If (::nL --) > 1
       aRes := MyReadRow( ::hRes )
@@ -660,7 +668,7 @@ EndIf
 ::aTG[1] -= ::aTG[7]
 ::aTG[8] := ::aTG[1] + ::aTG[2] + ::aTG[3] + ::aTG[4] + ::aTG[5] + ::aTG[6]
 ::aTG[9] := 0
-::nL     := If( LEN( ::aPG ) > 0, 12, 11 )
+::nL     := If( LEN( ::aPG ) > 0, 13, 12 )
 cQry := SPACE(11)
 
 oRpt:Separator( 0,::nL+LEN( ::aPG ) )
@@ -700,6 +708,8 @@ oRpt:Say(++oRpt:nL,07,"OTROS PAGOS(ant):" + cQry +;
 oRpt:Say(  oRpt:nL,63,TRANSFORM( ::aTG[17],"@Z 99,999,999.99" ))
 oRpt:Say(++oRpt:nL,07,"DSCTO. TARJETAS :" + cQry +;
            TRANSFORM( ::aTG[09],"99,999,999.99" ))
+oRpt:Say(++oRpt:nL,07,"APROVECHAMIENTO :" + cQry +;
+           TRANSFORM( ::aTG[19],"99,999,999.99" ))
 oRpt:Say(++oRpt:nL,07,"MOVTO. CONTABLE :" + cQry +;
            TRANSFORM( ::aTG[10],"99,999,999.99" ))
 oRpt:Say(  oRpt:nL,100,aRes )
@@ -713,7 +723,7 @@ METHOD ResumWIN() CLASS VDiarias
  ::aEnc[1] := ::Separator( ::nEndLine )
  ::nPage := 1
  ::aTG := { 0,0,0,0,0,0,0,"CHEQUES            :","TARJETAS DEBITO    :",;
-           "TARJETAS DE CREDITO:","OTROS PAGOS (BONOS):",0,0,0,0,0,0,0 }
+           "TARJETAS DE CREDITO:","OTROS PAGOS (BONOS):",0,0,0,0,0,0,0,0 }
  aRes  := ::ArmarINF( "Resume" )
  ::aPG := {}
 If ::nL > 0
@@ -732,6 +742,7 @@ While ::nL > 0
    If aRes[14] == "A"
        ::aTG[17] += aRes[8]
    Else
+      aRes[1] += aRes[15]
       If nFormaP # 0 .AND. nFormaP == aRes[9]
          If aRes[9] >= 2 .AND. aRes[9] <= 3
             nK := aRes[8] -  aRes[3]
@@ -777,6 +788,7 @@ While ::nL > 0
       ::aTG[14] +=  aRes[11]
       ::aTG[15] +=  aRes[12]
       ::aTG[16] +=  aRes[13]
+      ::aTG[19] +=  aRes[15]
    EndIf
    If (::nL --) > 1
       aRes := MyReadRow( ::hRes )
@@ -840,7 +852,7 @@ EndIf
  ::aTG[8] := ::aTG[1] + ::aTG[2] + ::aTG[3] + ::aTG[4] + ::aTG[5] + ::aTG[6]
  ::aTG[9] := 0
    nK     := LEN( ::aPG ) / 2
- ::nL     := If( nK > 0, 6, 5.5 )
+ ::nL     := If( nK > 0, 6.5, 6 )
  ::Cabecera( .t.,0.5,::nL + nK )
 If nK > 0
    ASORT( ::aPG,,, { |x,y| x[1] < y[1] } )
@@ -889,6 +901,9 @@ UTILPRN ::oUtil Self:nLinea,12.0 SAY TRANSFORM( ::aTG[17],"@Z 99,999,999.99" ) R
  ::nLinea += 0.5
 UTILPRN ::oUtil Self:nLinea,01.7 SAY "DSCTO. TARJETAS :"
 UTILPRN ::oUtil Self:nLinea,09.9 SAY TRANSFORM( ::aTG[09],   "99,999,999.99" ) RIGHT
+ ::nLinea += 0.5
+UTILPRN ::oUtil Self:nLinea,01.7 SAY "APROVECHAMIENTO :"
+UTILPRN ::oUtil Self:nLinea,09.9 SAY TRANSFORM( ::aTG[19],   "99,999,999.99" ) RIGHT
  ::nLinea += 0.5
 UTILPRN ::oUtil Self:nLinea,01.7 SAY "MOVTO. CONTABLE :"
 UTILPRN ::oUtil Self:nLinea,09.9 SAY TRANSFORM( ::aTG[10],   "99,999,999.99" ) RIGHT
