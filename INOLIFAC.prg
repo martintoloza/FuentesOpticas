@@ -527,12 +527,15 @@ EndIf
 RETURN NIL
 
 //------------------------------------//
-FUNCTION Retenciones( dFecha,nValor,nNit,aPR )
-// LOCAL aRet := { 0,0,0,0 }
+FUNCTION Retenciones( dFecha,nValor,nNit,aPR,lPtj )
+
 If aPR == NIL
    aPR := PIva( dFecha )
+   lPtj:= .t.
+Else
+   lPtj:= .f.
 EndIf
-// 1_RETFTE, 2_ RETICA, 3_RETCREE, 4_RSIM, 5_BASE
+// 1_RETFTE, 2_RETICA, 3_RETCREE, 4_RSIM, 5_BASE
 /*
    If nValor >= oApl:oEmp:TOPERET
       oApl:oFac:RETFTE := ROUND( nValor * oApl:oEmp:PRET,0 )
@@ -555,5 +558,7 @@ If oApl:oNit:REGSIMPLI
    aPR[4] := ROUND( nValor * aPR[8],0 )
  //aPR[4] := ROUND( nValor * .16 * .15,0 )
 EndIf
-AEVAL( aPR, { | xV,nP | aPR[nP] := ROUND( xV * 100,2 ) },6 )
+If lPtj
+   AEVAL( aPR, { | xV,nP | aPR[nP] := ROUND( xV * 100,2 ) },6 )
+EndIf
 RETURN aPR

@@ -46,7 +46,7 @@ Case cTabla == "cadempre"
                 { "principal" , "N", 02, 00, },;
                 { "dividenomb", "N", 02, 00, },;
                 { "lente"     , "C", 01, 00, },;
-                { "sgsss"     , "C", 10, 00, },;
+                { "sgsss"     , "C", 13, 00, },;
                 { "observa"   , "C", 90, 00, } }
    aIndice := { { "Optica", { "Optica" } } }
 Case cTabla == "cadlente"
@@ -327,7 +327,7 @@ Case cTabla == "ridars"
    aStruct := { { "row_id"    , "N", 11, 00, " auto_increment PRIMARY KEY" },;
                 { "codigo"    , "C", 06, 00, },;
                 { "nombre"    , "C",100, 00, },;
-                { "sgsss"     , "C", 10, 00, },;
+                { "sgsss"     , "C", 13, 00, },;
                 { "remision"  , "N", 08, 00, } }
    aIndice := { { "Codigo",  { "codigo" } },;
                 { "Nombre",  { "nombre" } } }
@@ -399,7 +399,7 @@ Case cTabla == "ridservi"
 Case cTabla == "ripac"          // Archivo de Consulta
    aStruct := { { "row_id"    , "N", 11, 00, " auto_increment PRIMARY KEY" },;
                 { "factura"   , "C", 20, 00, },;
-                { "sgsss"     , "C", 10, 00, },;
+                { "sgsss"     , "C", 13, 00, },;
                 { "tipoiden"  , "C", 02, 00, },;
                 { "nroiden"   , "C", 15, 00, },;
                 { "fecha"     , "D", 08, 00, },;
@@ -418,14 +418,14 @@ Case cTabla == "ripac"          // Archivo de Consulta
 Case cTabla == "ripad"          // Archivo de descripcion agrupada de los servicios de salud prestados
    aStruct := { { "row_id"    , "N", 11, 00, " auto_increment PRIMARY KEY" },;
                 { "factura"   , "C", 20, 00, },;
-                { "sgsss"     , "C", 10, 00, },;
+                { "sgsss"     , "C", 13, 00, },;
                 { "concepto"  , "C", 02, 00, },;
                 { "cantidad"  , "N", 15, 02, },;
                 { "valorund"  , "N", 15, 02, },;
                 { "valortot"  , "N", 15, 02, } }
 Case cTabla == "ripaf"          // Archivo de las Transacciones
    aStruct := { { "row_id"    , "N", 11, 00, " auto_increment PRIMARY KEY" },;
-                { "sgsss"     , "C", 10, 00, },;
+                { "sgsss"     , "C", 13, 00, },;
                 { "razonsoc"  , "C", 60, 00, },;
                 { "tipoiden"  , "C", 02, 00, },;
                 { "nroiden"   , "C", 15, 00, },;
@@ -445,7 +445,7 @@ Case cTabla == "ripaf"          // Archivo de las Transacciones
 Case cTabla == "ripat"          // Archivo de Otros Servicios
    aStruct := { { "row_id"    , "N", 11, 00, " auto_increment PRIMARY KEY" },;
                 { "factura"   , "C", 20, 00, },;
-                { "sgsss"     , "C", 10, 00, },;
+                { "sgsss"     , "C", 13, 00, },;
                 { "tipoiden"  , "C", 02, 00, },;
                 { "nroiden"   , "C", 15, 00, },;
                 { "autoriza"  , "C", 15, 00, },;
@@ -457,7 +457,7 @@ Case cTabla == "ripat"          // Archivo de Otros Servicios
                 { "valortot"  , "N", 15, 02, } }
 Case cTabla == "ripct"          // Archivo de Control
    aStruct := { { "row_id"    , "N", 11, 00, " auto_increment PRIMARY KEY" },;
-                { "sgsss"     , "C", 10, 00, },;
+                { "sgsss"     , "C", 13, 00, },;
                 { "fecha"     , "D", 08, 00, },;
                 { "archivo"   , "C", 08, 00, },;
                 { "registros" , "C", 10, 00, } }

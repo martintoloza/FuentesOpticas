@@ -1003,7 +1003,7 @@ If oApl:oFac:lOK .AND.;
             If oApl:oFac:Seek( {"optica",oApl:nEmpresa,"numfac",::aM[2],"tipo",oApl:Tipo} )
                ::AdicArray()
                ::Division()
-               CaoLiFac( ::aM[2],::aV,{::aM[4],::cTipoF} )
+               CaoLiFac( ::aM[2],::aV,{::aM[4],::cTipoF,1} )
             EndIf
          NEXT aLF[1]
       EndIf

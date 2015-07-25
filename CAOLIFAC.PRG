@@ -12,7 +12,9 @@ If EMPTY( nFac )
    RETURN
 EndIf
 oLF := TListFac()
-If oLF:Dialog()
+If LEN( aM ) == 3
+   oLF:NEW( nFac,aDT,aM )
+ElseIf oLF:Dialog()
    oLF:NEW( nFac,aDT,aM )
 EndIf
 RETURN
@@ -121,7 +123,8 @@ FOR nL := ::aF[5] TO nFac
    If !EMPTY( aDT[nL,1] ) .AND.;
       !(TRIM(aDT[nL,1]) == "0505" .AND. aDT[nL,7] == 0)
       ::aF[4]:= ::LenteOft( aDT[nL,1],aDT[nL,2],aDT[nL,8],aDT[nL,14],oRpt )
-      If TRIM(aDT[nL,1]) # "0203"
+      If TRIM(aDT[nL,1]) # "0203" .OR.;
+         TRIM(aDT[nL,1]) # "059999"
          If aDT[nL,4] == 0
             ::aF[4] := aDT[nL,6] + aDT[nL,7]   //oVen:DESMON + oVen:PRECIOVEN
          ElseIf aDT[nL,2] # "FACTURACION  CORRESPONDIENTE AL  SUMINIS"
@@ -288,7 +291,6 @@ EndIf
  ::Init( "Factura"+STR(::aF[1]), .t. ,, !::lPrev ,,, ::lPrev, 5 )
  ::DFonts()
  ::lPrev := If( ::nTL <= 6, .t., .f. )
-
  PAGE
     If oApl:oFac:NUMFAC == oApl:oFac:REMPLAZA .AND. ::nTL > oApl:nItems
        ::aF[5] := ::ResumenV( aDT )
@@ -300,7 +302,8 @@ EndIf
           ::Cabecera( .t.,::aF[3] )
           ::aF[3] := .5
           ::aF[4] := ::LenteOft( aDT[nL,1],aDT[nL,2],aDT[nL,8],aDT[nL,14] )
-          If TRIM(aDT[nL,1]) # "0203"
+          If TRIM(aDT[nL,1]) # "0203" .OR.;
+             TRIM(aDT[nL,1]) # "059999"
              If aDT[nL,4] == 0
                 ::aF[4] := aDT[nL,6] + aDT[nL,7]   //oVen:DESMON + oVen:PRECIOVEN
              ElseIf aDT[nL,2] # "FACTURACION  CORRESPONDIENTE AL  SUMINIS"
@@ -579,6 +582,9 @@ RETURN 0
 //------------------------------------//
 METHOD ResumenV( aDT,oRpt ) CLASS TListFac
    LOCAL aDet, cCod, nK, nL, nPUnitario
+If ASCAN( aDT, { |x| x[1] == "059999      " } ) > 0
+   RETURN 1
+EndIf
 aDet := { {"0599000001  ","MONTURAS"         ,0,0,0,0},;
           {"0599000002  ","LENTES OFTALMICOS",0,0,0,0},;
           {"0599000003  ","LENTES CONTACTOS" ,0,0,0,0},;
@@ -671,7 +677,8 @@ FOR nL := 1 TO ::nTL
          oRpt:Say( 11,00,REPLICATE( "-",137 ) )
       EndIf
       ::aF[4] := ::LenteOft( aDT[nL,1],aDT[nL,2],aDT[nL,8],aDT[nL,14],oRpt )
-      If TRIM(aDT[nL,1]) # "0203"
+      If TRIM(aDT[nL,1]) # "0203" .OR.;
+         TRIM(aDT[nL,1]) # "059999"
          ::aF[4] := ROUND((aDT[nL,6] + aDT[nL,7]) / aDT[nL,4],0)
          If aDT[nL,4] == 0
             ::aF[4] := aDT[nL,6] + aDT[nL,7]
@@ -716,7 +723,8 @@ FOR nL := 1 TO ::nTL
       ::Cabecera( .t.,::aF[3] )
       ::aF[3] := .5
       ::aF[5] := ::LenteOft( aDT[nL,1],aDT[nL,2],aDT[nL,8],aDT[nL,14] )
-      If TRIM(aDT[nL,1]) # "0203"
+      If TRIM(aDT[nL,1]) # "0203" .OR.;
+         TRIM(aDT[nL,1]) # "059999"
          ::aF[5] := ROUND((aDT[nL,6] + aDT[nL,7]) / aDT[nL,4],0)
          If aDT[nL,4] == 0
             ::aF[5] := aDT[nL,6] + aDT[nL,7]
