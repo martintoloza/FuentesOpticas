@@ -1215,8 +1215,7 @@ While nL > 0
                aGT[nE,7] += aPG[nC,7]  //Bonos por N.C
             EndIf
                aGT[6 ,7] += aPG[nC,6]  //Descuentos
-               aGT[9 ,8] += aGT[1 ,6]  //13050502
-               aGT[10,8] += aPG[nC,17] //Aprovechamiento
+               aGT[9 ,8] += (aGT[1,6] - aPG[nC,17])  //13050502
          EndIf
       Else
          If aPG[nC,8] # "A"
@@ -1258,10 +1257,13 @@ While nL > 0
          EndIf
          If aRC[3]  # "A"
             aGT[8,7] += If( aPG[nC,8] == "A", aGT[1,6], 0 )
-            aGT[9,8] += aGT[1,6]
+            aGT[9,8] += (aGT[1,6] - aPG[nC,17])
          Else
-            aGT[8,8] += aGT[1,6]
+            aGT[8,8] +=  aGT[1,6]
          EndIf
+      EndIf
+      If aPG[nC,17] > 0
+         aGT[10,8] += aPG[nC,17] //Aprovechamiento
       EndIf
       nE := 9
    NEXT nC

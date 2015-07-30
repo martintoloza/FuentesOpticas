@@ -28,7 +28,7 @@ RETURN
 
 //------------------------------------//
 STATIC PROCEDURE ListoRes( aVT )
-   LOCAL aLS := { "",0,0,0,0,0,0,0,0,0,0,0,0,aVT[3] }
+   LOCAL aLS := { "",0,0,0,0,0,0,0,0,0,0,0,0,0,aVT[3] }
    LOCAL aRes, hRes, cQry, nL, nK, oRpt := TDosPrint()
 aLS[1] := NtChr( aVT[1],"F" )
 aLS[2] := CTOD( NtChr( aLS[1],"4" ) )
@@ -110,16 +110,16 @@ If aVt[2] == "D"
    oRpt:NewPage()
    oRpt:End() ; RETURN
 EndIf
-cQry := "SELECT formapago, pagado - IFNULL(p_de_mas,0), abono, deduccion, descuento, retencion + "+;
-        "IFNULL(retiva,0) + IFNULL(retica,0) + IFNULL(retcre,0), indicador, indred, 0 "           +;
+cQry := "SELECT formapago, pagado, abono, deduccion, descuento, retencion + IFNULL(retiva,0) + "+;
+                   "IFNULL(retica,0) + IFNULL(retcre,0), indicador, indred, p_de_mas, 0 "       +;
         "FROM cadpagos "                              +;
         "WHERE optica  = "+ LTRIM(STR(oApl:nEmpresa)) +;
          " AND fecpag >= "+ xValToChar( aLS[1] )      +;
          " AND fecpag <= "+ xValToChar( aLS[2] )      +;
          " AND tipo   = " + xValToChar( oApl:Tipo )   +;
          " AND indicador <> 'A' UNION ALL "           +;
-        "SELECT formapago, pagado - IFNULL(p_de_mas,0), abono, deduccion, descuento, retencion + "+;
-        "IFNULL(retiva,0) + IFNULL(retica,0) + IFNULL(retcre,0), 'T', indred, 1 FROM cadantip "   +;
+        "SELECT formapago, pagado, abono, deduccion, descuento, retencion + IFNULL(retiva,0) + " +;
+                   "IFNULL(retica,0) + IFNULL(retcre,0), 'T', indred, p_de_mas, 1 FROM cadantip "+;
         "WHERE optica = " + LTRIM(STR(oApl:nEmpresa)) +;
          " AND fecha >= " + xValToChar( aLS[1] )      +;
          " AND fecha <= " + xValToChar( aLS[2] )
@@ -129,15 +129,17 @@ nL   := MSNumRows( hRes )
 While nL > 0
    aRes := MyReadRow( hRes )
    AEVAL( aRes,{|xV,nP| aRes[nP] := MyClReadCol( hRes,nP ) } )
+      aRes[3] -= aRes[9]
    If aRes[1] == 8
       aLS[09] += aRes[2]     //N.D.
    ElseIf aRes[1] >= 7
       aLS[10] += aRes[2]     //N.C.
-   ElseIf aRes[9] == 1
+   ElseIf aRes[10] == 1
       aLS[08] += aRes[3]
    Else
       nK  := aRes[3] + aRes[4] + aRes[6] +;
              If( oApl:cPer < "199604", 0, aRes[5] )
+      aRes[2] -= aRes[9]
       aVT[04] := aRes[4] + aRes[5]
       aLS[07] += (nK - If( aRes[7] == "-", aRes[5], 0))
 //    aLS[08] += If( aRes[1] == 4 .AND. aRes[8], aRes[3], 0 )
@@ -147,6 +149,7 @@ While nL > 0
          aLS[13] += aRes[6]
       EndIf
    EndIf
+      aLS[14] += aRes[9]
    nL --
 EndDo
 MSFreeResult( hRes )
@@ -165,6 +168,7 @@ oRpt:Say( 20,10,"Notas Creditos............" + TRANSFORM( aLS[10],cQry ) )
 oRpt:Say( 22,10,"Saldo Actual.............." + TRANSFORM( aLS[05],cQry ) )
 oRpt:Say( 24,10,"Saldo Matematico.........." + TRANSFORM( aLS[11],cQry ) )
 oRpt:Say( 26,10,"Diferencia................" + TRANSFORM( aLS[12],cQry ) )
+oRpt:Say( 28,10,"Aprovechamiento..........." + TRANSFORM( aLS[14],cQry ) )
 oRpt:NewPage()
 oRpt:End()
 RETURN
@@ -172,11 +176,13 @@ RETURN
 //------------------------------------//
 STATIC PROCEDURE Abonos( aLS,nNumfac,oRpt,cIndica )
    LOCAL nK
-oApl:oPag:dbEval( {|o| If( o:FORMAPAGO >= 7                                            ,;
-                         (aLS[10] += (o:PAGADO * {-1,1,-1}[o:FORMAPAGO-6]) )           ,;
-                         (nK      := o:ABONO     + o:RETENCION + o:DEDUCCION +          ;
-                                     o:DESCUENTO + o:RETIVA    + o:RETICA    + o:RETCRE,;
-                          aLS[07] += nK, If( o:FORMAPAGO == 3 .AND. o:PAGADO < nK ,;
+oApl:oPag:dbEval( {|o| If( o:FORMAPAGO >= 7                                       ,;
+                         (aLS[10] += (o:PAGADO * {-1,1,-1}[o:FORMAPAGO-6]) )      ,;
+                         (nK      := o:ABONO     + o:RETENCION + o:DEDUCCION +     ;
+                                     o:DESCUENTO + o:RETIVA    + o:RETICA    +     ;
+                                     o:RETCRE    - o:P_DE_MAS                     ,;
+                          aLS[14] := o:PAGADO    - o:P_DE_MAS                     ,;
+                          aLS[07] += nK, If( o:FORMAPAGO == 3 .AND. aLS[14] < nK  ,;
                          (aLS[11] += o:ABONO + o:DEDUCCION + o:DESCUENTO), ) ) ) },;
                   {"optica",oApl:nEmpresa,"numfac",nNumfac,"tipo",oApl:Tipo       ,;
                    "fecpag >= ",aLS[1],"fecpag <= ",aLS[2],"indicador <>","A"} )
@@ -189,7 +195,7 @@ If ABS( aLS[05] ) # ABS( aLS[06] )
              TRANSFORM( aLS[05],"999,999,999" ) + " Mov" +;
              TRANSFORM( aLS[06],"999,999,999" ) + cIndica,,,1 )
    aLS[7] -= If( oApl:lFam, oApl:oFam:ABONOS, 0 )
-   If aLS[14] .AND. aLS[07] > 0
+   If aLS[15] .AND. aLS[07] > 0
       GrabaSal( nNumfac,1,aLS[07] )
       oApl:nSaldo := SaldoFac( nNumfac,1 )
    EndIf

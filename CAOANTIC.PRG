@@ -477,7 +477,8 @@ If !::oDb:lOK
          nAbono += (oApl:oPag:PAGADO    - oApl:oPag:P_DE_MAS)
          nR     :=  oApl:oPag:ABONO     + oApl:oPag:DEDUCCION +;
                     oApl:oPag:RETENCION + oApl:oPag:DESCUENTO +;
-                    oApl:oPag:RETIVA    + oApl:oPag:RETICA    + oApl:oPag:RETCRE
+                    oApl:oPag:RETIVA    + oApl:oPag:RETICA    +;
+                    oApl:oPag:RETCRE    - oApl:oPag:P_DE_MAS
          nValor += nR
          oApl:nSaldo -= nR
          AADD( aPago, {oApl:oPag:ABONO    , oApl:oPag:RETENCION,;
@@ -804,8 +805,9 @@ EndIf
                                  "A"        , o:RETIVA   , o:RETICA   ,;
                                  o:RETCRE   , o:P_DE_MAS} )           ,;
                     nValor += (o:ABONO + o:DEDUCCION  + o:RETENCION +  ;
-                               o:DESCUENTO + o:RETIVA + o:RETICA    + o:RETCRE),;
-                    nAbono += (o:PAGADO - o:P_DE_MAS) }                        ,;
+                               o:DESCUENTO + o:RETIVA + o:RETICA    +  ;
+                               o:RETCRE - o:P_DE_MAS)                 ,;
+                    nAbono += (o:PAGADO - o:P_DE_MAS) }               ,;
                {"optica",oApl:nEmpresa,"numero",::oDb:NUMERO} )
 oApl:nSaldo := ::oDb:TOTALFAC - nValor
 oApl:oFac:Seek( {"optica",oApl:nEmpresa,"numfac",0,"tipo",oApl:Tipo} )
@@ -814,7 +816,8 @@ While oApl:nSaldo > 0
       nAbono += (oApl:oPag:PAGADO    - oApl:oPag:P_DE_MAS)
       nPago  :=  oApl:oPag:ABONO     + oApl:oPag:DEDUCCION +;
                  oApl:oPag:RETENCION + oApl:oPag:DESCUENTO +;
-                 oApl:oPag:RETIVA    + oApl:oPag:RETICA    + oApl:oPag:RETCRE
+                 oApl:oPag:RETIVA    + oApl:oPag:RETICA    +;
+                 oApl:oPag:RETCRE    - oApl:oPag:P_DE_MAS
       nValor += nPago
       oApl:nSaldo -= nPago
       AADD( aPago, {oApl:oPag:ABONO    , oApl:oPag:RETENCION,;

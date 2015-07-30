@@ -270,7 +270,7 @@ If cTipo == NIL
    If aRes[7] # "A"
       ::aPG[6] += (aRes[10] + aRes[11])
       ::aPG[7] +=  aRes[09]
-      ::aPG[8] :=  aRes[08] + aRes[09] + aRes[10] + aRes[11] + aRes[15]
+      ::aPG[8] :=  aRes[08] + aRes[09] + aRes[10] + aRes[11]
       If aRes[13] == 3                 // Tarj. Credito
          If STR(aRes[12],10,2) == STR(::aPG[8],10,2)
             ::aPG[03] += ::aPG[8]
@@ -563,7 +563,6 @@ While ::nL > 0
    If aRes[14] == "A"
        ::aTG[17] += aRes[8]
    Else
-      aRes[1] += aRes[15]
       If nFormaP # 0 .AND. nFormaP == aRes[9]
          If aRes[9] >= 2 .AND. aRes[9] <= 3
             nK := aRes[8] -  aRes[3]
@@ -580,7 +579,7 @@ While ::nL > 0
          nK := aRes[1] + aRes[2] + aRes[3] + aRes[4]
          If nFormaP == 3 .AND. aRes[8] < nK     // Tarj. Credito
             ::aTG[2] -= aRes[1]
-            oRpt:Say( oRpt:nL,21,"P" )
+            oRpt:Say( oRpt:nL,22,"P" )
          ElseIf nFormaP >= 2
              If nFormaP == 4 .AND. aRes[10]
                 ::aTG[7] += aRes[1]
@@ -742,7 +741,6 @@ While ::nL > 0
    If aRes[14] == "A"
        ::aTG[17] += aRes[8]
    Else
-      aRes[1] += aRes[15]
       If nFormaP # 0 .AND. nFormaP == aRes[9]
          If aRes[9] >= 2 .AND. aRes[9] <= 3
             nK := aRes[8] -  aRes[3]

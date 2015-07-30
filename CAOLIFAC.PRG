@@ -123,7 +123,7 @@ FOR nL := ::aF[5] TO nFac
    If !EMPTY( aDT[nL,1] ) .AND.;
       !(TRIM(aDT[nL,1]) == "0505" .AND. aDT[nL,7] == 0)
       ::aF[4]:= ::LenteOft( aDT[nL,1],aDT[nL,2],aDT[nL,8],aDT[nL,14],oRpt )
-      If TRIM(aDT[nL,1]) # "0203" .OR.;
+      If TRIM(aDT[nL,1]) # "0203" .AND.;
          TRIM(aDT[nL,1]) # "059999"
          If aDT[nL,4] == 0
             ::aF[4] := aDT[nL,6] + aDT[nL,7]   //oVen:DESMON + oVen:PRECIOVEN
@@ -201,19 +201,21 @@ oApl:oPag:Seek( {"optica",oApl:nEmpresa,"numfac",::aF[1],"tipo",oApl:Tipo} )
 While nFac <= 3     .AND. ;
       oApl:oPag:lOK .AND. !oApl:oPag:Eof()
    If oApl:oPag:PORDONDE == "F"
-      ::aF[4] := oApl:oPag:ABONO
+      ::aF[4] := oApl:oPag:ABONO     - oApl:oPag:P_DE_MAS
+      ::aF[5] := oApl:oPag:DEDUCCION + oApl:oPag:DESCUENTO + oApl:oPag:RETENCION +;
+                 oApl:oPag:RETIVA    + oApl:oPag:RETICA    + oApl:oPag:RETCRE
       If oApl:oPag:FORMAPAGO == 0
          oRpt:Say( nL,17,"X" )
       ElseIf oApl:oPag:FORMAPAGO == 1
          oRpt:Say( nL,21,oApl:oPag:CODBANCO )
          oRpt:Say( nL,25,oApl:oPag:NUMCHEQUE )
       Else
-         ::aF[4] += oApl:oPag:DEDUCCION
+         ::aF[4] += ::aF[5]
          oApl:oBco:Seek( {"codigo",oApl:oPag:CODBANCO} )
          oRpt:Say( nL,44,oApl:oBco:NOMBRE,20 )
          oRpt:Say( nL,62,oApl:oPag:NUMCHEQUE )
       EndIf
-      oRpt:Say( nL, 87,TRANSFORM( oApl:oPag:DEDUCCION+oApl:oPag:DESCUENTO,"9,999,999.99" ) )
+      oRpt:Say( nL, 87,TRANSFORM( ::aF[5],"9,999,999.99" ) )
       oRpt:Say( nL,103,TRANSFORM( ::aF[4],"9,999,999.99" ) )
       If nFac == 2
          oRpt:Say( nL,121,TRANSFORM( oApl:nSaldo,"@Z 99,999,999.99" ) )
@@ -302,7 +304,7 @@ EndIf
           ::Cabecera( .t.,::aF[3] )
           ::aF[3] := .5
           ::aF[4] := ::LenteOft( aDT[nL,1],aDT[nL,2],aDT[nL,8],aDT[nL,14] )
-          If TRIM(aDT[nL,1]) # "0203" .OR.;
+          If TRIM(aDT[nL,1]) # "0203" .AND.;
              TRIM(aDT[nL,1]) # "059999"
              If aDT[nL,4] == 0
                 ::aF[4] := aDT[nL,6] + aDT[nL,7]   //oVen:DESMON + oVen:PRECIOVEN
@@ -677,7 +679,7 @@ FOR nL := 1 TO ::nTL
          oRpt:Say( 11,00,REPLICATE( "-",137 ) )
       EndIf
       ::aF[4] := ::LenteOft( aDT[nL,1],aDT[nL,2],aDT[nL,8],aDT[nL,14],oRpt )
-      If TRIM(aDT[nL,1]) # "0203" .OR.;
+      If TRIM(aDT[nL,1]) # "0203" .AND.;
          TRIM(aDT[nL,1]) # "059999"
          ::aF[4] := ROUND((aDT[nL,6] + aDT[nL,7]) / aDT[nL,4],0)
          If aDT[nL,4] == 0
@@ -723,7 +725,7 @@ FOR nL := 1 TO ::nTL
       ::Cabecera( .t.,::aF[3] )
       ::aF[3] := .5
       ::aF[5] := ::LenteOft( aDT[nL,1],aDT[nL,2],aDT[nL,8],aDT[nL,14] )
-      If TRIM(aDT[nL,1]) # "0203" .OR.;
+      If TRIM(aDT[nL,1]) # "0203" .AND.;
          TRIM(aDT[nL,1]) # "059999"
          ::aF[5] := ROUND((aDT[nL,6] + aDT[nL,7]) / aDT[nL,4],0)
          If aDT[nL,4] == 0

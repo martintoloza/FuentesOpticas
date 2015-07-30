@@ -392,7 +392,7 @@ METHOD ArmarPAG( aRes,nK ) CLASS CDiarias
 
  AFILL( ::aCD,0,1,5 )
  ::aCD[6] := aRes[4] + aRes[5]
- ::aCD[7] := aRes[3] + aRes[6] + aRes[14] + ::aCD[6]
+ ::aCD[7] := aRes[3] + aRes[6] + ::aCD[6]
  If aRes[8] >= 2 .AND. aRes[8] <= 3
     If aRes[7] == ::aCD[7]
        ::aCD[3] := ::aCD[7]          //[3]Tarj. Debito
@@ -777,13 +777,14 @@ If oApl:oEmp:DIVIDENOMB > 0
 Else
    nC := 0
 EndIf
-aCT  := { {"11050501",0,0},{"13551501",0,0},{"13551701",0,0},{"13551801",0,0},;
-          {"13551901",0,0},{"53053501",0,0},{"28050501",0,0},{"13050502",0,0} }
+aCT  := { {"11050501",0,0},{"13551501",0,0},{"13551701",0,0},;
+          {"13551801",0,0},{"13551901",0,0},{"53053501",0,0},;
+          {"28050501",0,0},{"13050502",0,0},{"42950501",0,0} }
 aLC  := { PADC(   LEFT( oApl:oEmp:NOMBRE,oApl:oEmp:DIVIDENOMB    ),25 ),;
           PADC( SUBSTR( oApl:oEmp:NOMBRE,oApl:oEmp:DIVIDENOMB,nC ),25 ),;
           0,0,"99,999,999",0,;
         "SELECT p.numero, p.abono, p.retencion, p.retiva, p.retica, p.deduccion + p.descuento, "+;
-               "p.retcre, p.pordonde, p.formapago, c.cliente, c.codigo_cli, p.indred "+;
+               "p.retcre, p.pordonde, p.formapago, c.cliente, c.codigo_cli, p.indred, p.p_de_mas "+;
         "FROM cadantip p, cadantic c "                 +;
         "WHERE p.optica = " + LTRIM(STR(oApl:nEmpresa))+;
          " AND p.rcaja  = [RCAJA]"                     +;
@@ -839,8 +840,8 @@ While nL > 0
       oRpt:nPage += If( nC-oRpt:nPage*18 > 13, 2, 1 )
    EndIf
    FOR nC := 1 TO LEN( aPG )
-      aLC[3] := aPG[nC,2] + aPG[nC,3] + aPG[nC,4] + aPG[nC,5] + aPG[nC,6] + aPG[nC,7]
-      aLC[4] += aLC[3]
+      aLC[3] := aPG[nC,2] + aPG[nC,3] + aPG[nC,4] + aPG[nC,5] + aPG[nC,6] + aPG[nC,7] - aPG[nC,13]
+      aLC[4] +=   (aLC[3] + aPG[nC,13])
       If aPG[nC,9] == 4 .AND. aPG[nC,12]
          If aRC[3]  # "A"
             aCT[6,2] += aLC[3]
@@ -861,6 +862,7 @@ While nL > 0
          Else
             aCT[7,3] += aLC[3]
          EndIf
+            aCT[9,3] += aPG[nC,13]
       EndIf
       If oRpt:nL ==  0
          EVAL( oRpt:Cargo )
@@ -902,7 +904,7 @@ While nL > 0
    oRpt:Say(  oRpt:nL,126,TRANSFORM( aLC[4], aLC[5] ) )
    oRpt:Say(++oRpt:nL, 73,REPLICATE( "=",63 ) )
    oRpt:SetFont( oRpt:CPINormal,82,1 )
-   FOR nC := 1 TO 8
+   FOR nC := 1 TO 9
       If aCT[nC,2] > 0 .OR. aCT[nC,3] > 0
          oRpt:Say(++oRpt:nL,06,aCT[nC,1] )
          oRpt:Say(  oRpt:nL,16,TRANSFORM(aCT[nC,2],"@Z 99,999,999") )
@@ -939,8 +941,8 @@ While nL > 0
       ::nFila +=  If( nC-::nFila*19 > 13, 2, 1 )
    EndIf
    FOR nC := 1 TO LEN( aPG )
-      aLC[3] := aPG[nC,2] + aPG[nC,3] + aPG[nC,4] + aPG[nC,5] + aPG[nC,6] + aPG[nC,7]
-      aLC[4] += aLC[3]
+      aLC[3] := aPG[nC,2] + aPG[nC,3] + aPG[nC,4] + aPG[nC,5] + aPG[nC,6] + aPG[nC,7] - aPG[nC,13]
+      aLC[4] +=   (aLC[3] + aPG[nC,13])
       If aPG[nC,9] == 4 .AND. aPG[nC,12]
          If aRC[3]  # "A"
             aCT[6,2] += aLC[3]
@@ -961,6 +963,7 @@ While nL > 0
          Else
             aCT[7,3] += aLC[3]
          EndIf
+            aCT[9,3] += aPG[nC,13]
       EndIf
       aPG[nC,3] += aPG[nC,4] + aPG[nC,5]
       ::Memo( 11.56 )
@@ -992,7 +995,7 @@ While nL > 0
       ::nLinea += 0.42
       UTILPRN ::oUtil LINEA Self:nLinea  ,10.6 TO Self:nLinea,20.5 PEN ::oPen
       UTILPRN ::oUtil SELECT ::aFnt[2]
-   FOR nC := 1 TO 8
+   FOR nC := 1 TO 9
       If aCT[nC,2] > 0 .OR. aCT[nC,3] > 0
          ::nLinea += 0.42
          UTILPRN ::oUtil Self:nLinea, 2.0 SAY aCT[nC,1]

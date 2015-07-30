@@ -6,21 +6,23 @@ MEMVAR oApl
 
 //------------------------------------//
 FUNCTION CaoPagos( lPago,lNuevo,aPag )
-   LOCAL oDlg, oGet := ARRAY(16), aP := { oApl:dFec,"","","99,999,999",.f.,0,.f. }
-   LOCAL aTC, bGrabar, bSumar, bValid, nFPag, nFactu, nPago := 0
+   LOCAL aP, aTC, oDlg, oGet := ARRAY(17)
+   LOCAL bGrabar, bSumar, bValid, nFPag, nFactu, nPago := 0
 DEFAULT lPago := .f., lNuevo := .t. ,;
         aPag  := ArrayCombo( "FPAGO" )
+aP := { oApl:dFec,"","","99,999,999",.f.,0,.f.,0,0,0,0,0,0,0,0 }
 If lPago
    bGrabar := {|| GrabaPago( lNuevo,aP[6] )       ,;
                   aP[2] := oApl:oPag:NUMCHEQUE    ,;
                   aP[3] := oApl:oPag:CODBANCO     ,;
                   nPago := 0                      ,;
                   If( lNuevo, ( oApl:oPag:xBlanK(),;
-                  oApl:oPag:FECPAG    := aP[1]    ,;
-                  oApl:oPag:NUMCHEQUE := aP[2]    ,;
-                  oApl:oPag:CODBANCO  := aP[3]    ,;
-                  oDlg:Update(), oGet[13]:oJump := ;
-                  oGet[2], oGet[2]:SetFocus() )   ,;
+                      oApl:oPag:FECPAG    := aP[1],;
+                      oApl:oPag:NUMCHEQUE := aP[2],;
+                      oApl:oPag:CODBANCO  := aP[3],;
+                      AFILL( aP,0,8 )             ,;
+                   oDlg:Update(), oGet[13]:oJump :=;
+                   oGet[2], oGet[2]:SetFocus() )  ,;
                  (aP[5] := .t., oDlg:End()) ) }
    oApl:nSaldo := 0
    oApl:Tipo   := "U"
@@ -46,30 +48,29 @@ Else
       oApl:cPer := NtChr( oApl:oPag:FECPAG,"1" )
       oApl:lFam := SaldoFac( oApl:oPag:NUMFAC )
    EndIf
-   aP[6]       := oApl:oPag:PAGADO - oApl:oPag:P_DE_MAS
+   aP[06]      := oApl:oPag:PAGADO - oApl:oPag:P_DE_MAS
+   aP[08]      := oApl:oPag:ABONO
+   aP[09]      := oApl:oPag:DEDUCCION
+   aP[10]      := oApl:oPag:RETENCION
+   aP[11]      := oApl:oPag:DESCUENTO
+   aP[12]      := oApl:oPag:P_DE_MAS
+   aP[13]      := oApl:oPag:RETICA
+   aP[14]      := oApl:oPag:RETIVA
+   aP[15]      := oApl:oPag:RETCRE
    oApl:nSaldo += aP[6]
    If (aP[7] := Rango( oApl:oPag:FORMAPAGO,2,3 ))
-      oApl:oPag:ABONO     += oApl:oPag:DEDUCCION
-      oApl:oPag:DEDUCCION := 0
+      aP[08]   += aP[09]
+      aP[09]   := 0
    EndIf
 EndIf
-bValid := " FROM bancosd WHERE (optica = " + LTRIM(STR(oApl:nEmpresa))      +;
+aTC    := PIva( oApl:oPag:FECPAG )
+aTC[5] := " FROM bancosd WHERE (optica = " + LTRIM(STR(oApl:nEmpresa))      +;
                            " OR optica = " + LTRIM(STR(oApl:oEmp:PRINCIPAL))+;
                          ") AND codigo = 'bco'"
-/*
-aTC := Buscar( "SELECT iva2, ica, ret, 1 FROM cadfijos WHERE " + xValToChar(oApl:oPag:FECPAG) +;
-               " BETWEEN fechai AND fechaf AND optica = " + LTRIM(STR(oApl:nEmpresa)),"CM",,8 )
-If LEN( aTC ) == 0
-   aTC := { 0,0,0,0 }
-EndIf
-AADD( aTC,bValid )
-*/
-aTC    := PIva( oApl:oPag:FECPAG )
-aTC[5] := bValid
 If aP[7] .AND. aTC[4] == 1
-   oApl:oPag:ABONO     += oApl:oPag:RETENCION + oApl:oPag:RETIVA + oApl:oPag:RETICA
-   oApl:oPag:RETIVA    := oApl:oPag:RETIVA * aTC[1] * 100
-   oApl:oPag:RETENCION := oApl:oPag:RETICA := 0
+   aP[08] += aP[10] + aP[14] + aP[13]
+   aP[14] := aP[14] * aTC[1] * 100
+   aP[10] := aP[13] := aP[09] := 0
 EndIf
 oApl:oBco:Seek( {"codigo",oApl:oPag:CODBANCO} )
 bValid := {|| If( !oApl:oFac:Seek( { "optica",oApl:nEmpresa,"numfac"    ,;
@@ -78,18 +79,17 @@ bValid := {|| If( !oApl:oFac:Seek( { "optica",oApl:nEmpresa,"numfac"    ,;
                 (If( (nPago := AT( oApl:oFac:INDICADOR,"ACN" )) > 0     ,;
                 (MsgStop({"ANULADA","CANCELADA","N.Credito"}[nPago],"Factura"), .f.),;
                 (oApl:lFam := SaldoFac( nFactu ), nPago := 0            ,;
-                 oApl:oPag:ABONO := oApl:nSaldo, oDlg:Update(), .t.) ))) }
+                 aP[08] := oApl:nSaldo, oDlg:Update(), .t.) ))) }
 bSumar := {|nVal| If( nVal < 0, (MsgStop( "El Valor debe ser Mayor de 0",;
                      "<< OJO >>" ), .f.), ;
-            (nPago := oApl:oPag:ABONO     + oApl:oPag:DEDUCCION +;
-                      oApl:oPag:RETENCION + oApl:oPag:DESCUENTO +;
-                      oApl:oPag:RETICA    + oApl:oPag:RETCRE    +;
-                      If( nFPag >= 3, 0,    oApl:oPag:RETIVA )  ,;
+            (nPago := aP[08] + aP[09] + aP[10] +;
+                      aP[11] + aP[13] + aP[15] +;
+                      If( nFPag >= 3, 0, aP[14] ),;
              oGet[15]:Refresh(), .t.) ) }
 nFactu := oApl:oPag:NUMFAC
 nFPag  := ArrayValor( aPag,STR(oApl:oPag:FORMAPAGO,1),,.t. )
 DEFINE DIALOG oDlg TITLE "Pagos a Facturas de " + ArrayValor( oApl:aOptic,STR(oApl:nEmpresa,2) );
-   FROM 0, 0 TO 370, 330 PIXEL
+   FROM 0, 0 TO 370, 340 PIXEL
    @  02, 00 SAY "Fecha"         OF oDlg RIGHT PIXEL SIZE 50,10
    @  02, 52 GET oGet[01] VAR oApl:oPag:FECPAG OF oDlg ;
       VALID (aP[1] := oApl:oPag:FECPAG, oApl:cPer := NtChr( aP[1],"1" ), .t.);
@@ -107,28 +107,28 @@ DEFINE DIALOG oDlg TITLE "Pagos a Facturas de " + ArrayValor( oApl:aOptic,STR(oA
       SIZE 52,99 OF oDlg PIXEL ;
       VALID (aP[7] := Rango( nFPag,2,4 ), .t.)
    @  62, 00 SAY "Monto Pago"    OF oDlg RIGHT PIXEL SIZE 50,10
-   @  62, 52 GET oGet[04] VAR oApl:oPag:ABONO     OF oDlg PICTURE aP[4];
-      VALID EVAL( bSumar,oApl:oPag:ABONO )     ;
+   @  62, 52 GET oGet[04] VAR aP[08]     OF oDlg PICTURE aP[4];
+      VALID EVAL( bSumar,aP[08] )     ;
       SIZE 40,10 PIXEL UPDATE
    @  74, 00 SAY "Deducción"     OF oDlg RIGHT PIXEL SIZE 50,10
-   @  74, 52 GET oGet[05] VAR oApl:oPag:DEDUCCION OF oDlg PICTURE aP[4];
-      VALID EVAL( bSumar,oApl:oPag:DEDUCCION ) ;
+   @  74, 52 GET oGet[05] VAR aP[09] OF oDlg PICTURE aP[4];
+      VALID EVAL( bSumar,aP[09] ) ;
       WHEN nFPag  # 5 SIZE 40,10 PIXEL UPDATE
    @  86, 00 SAY "Retención"     OF oDlg RIGHT PIXEL SIZE 50,10
-   @  86, 52 GET oGet[06] VAR oApl:oPag:RETENCION OF oDlg PICTURE aP[4];
-      VALID EVAL( bSumar,oApl:oPag:RETENCION ) ;
+   @  86, 52 GET oGet[06] VAR aP[10] OF oDlg PICTURE aP[4];
+      VALID EVAL( bSumar,aP[10] ) ;
       WHEN nFPag <= 2 SIZE 40,10 PIXEL UPDATE
    @  98, 00 SAY "Descuento"     OF oDlg RIGHT PIXEL SIZE 50,10
-   @  98, 52 GET oGet[07] VAR oApl:oPag:DESCUENTO OF oDlg PICTURE aP[4];
-      VALID EVAL( bSumar,oApl:oPag:DESCUENTO ) ;
+   @  98, 52 GET oGet[07] VAR aP[11] OF oDlg PICTURE aP[4];
+      VALID EVAL( bSumar,aP[11] ) ;
       WHEN nFPag  # 5 SIZE 40,10 PIXEL UPDATE
-   @  98, 94 SAY "Pagado de MAS" OF oDlg RIGHT PIXEL SIZE 36,10
-   @  98, 52 GET oGet[17] VAR oApl:oPag:P_DE_MAS OF oDlg PICTURE aP[4];
-      VALID EVAL( bSumar,oApl:oPag:P_DE_MAS ) ;
-      WHEN nFPag  # 5 SIZE 40,10 PIXEL UPDATE
+   @  98, 94 SAY "Pagado de +"   OF oDlg RIGHT PIXEL SIZE 36,10
+   @  98,132 GET oGet[17] VAR aP[12] OF oDlg PICTURE aP[4];
+      VALID EVAL( bSumar,aP[12] ) ;
+      WHEN nFPag  # 5 SIZE 34,10 PIXEL UPDATE
    @ 110, 00 SAY "Ret.ICA"       OF oDlg RIGHT PIXEL SIZE 50,10
-   @ 110, 52 GET oGet[08] VAR oApl:oPag:RETICA    OF oDlg PICTURE aP[4];
-      VALID EVAL( bSumar,oApl:oPag:RETICA ) ;
+   @ 110, 52 GET oGet[08] VAR aP[13]    OF oDlg PICTURE aP[4];
+      VALID EVAL( bSumar,aP[13] ) ;
       WHEN nFPag <= 2 SIZE 40,10 PIXEL UPDATE
    @ 110, 94 SAY "Total Pago"    OF oDlg RIGHT PIXEL SIZE 36,10
    @ 110,132 SAY oGet[15] VAR nPago OF oDlg PICTURE aP[4] SIZE 40,10 PIXEL;
@@ -147,12 +147,12 @@ DEFINE DIALOG oDlg TITLE "Pagos a Facturas de " + ArrayValor( oApl:aOptic,STR(oA
    @ 134,114 CHECKBOX oGet[11] VAR oApl:oPag:INDRED PROMPT "Por Datafono" OF oDlg;
       WHEN nFPag >= 4 SIZE 50,12 PIXEL UPDATE
    @ 146, 00 SAY "Ret.IVA."      OF oDlg RIGHT PIXEL SIZE 50,10
-   @ 146, 52 GET oGet[12] VAR oApl:oPag:RETIVA    OF oDlg PICTURE aP[4];
-      VALID EVAL( bSumar,oApl:oPag:RETIVA ) ;
+   @ 146, 52 GET oGet[12] VAR aP[14]    OF oDlg PICTURE aP[4];
+      VALID EVAL( bSumar,aP[14] ) ;
       WHEN nFPag <= 4 SIZE 40,10 PIXEL UPDATE
    @ 158, 00 SAY "Ret.CREE"      OF oDlg RIGHT PIXEL SIZE 50,10
-   @ 158, 52 GET oGet[16] VAR oApl:oPag:RETCRE    OF oDlg PICTURE aP[4];
-      VALID EVAL( bSumar,oApl:oPag:RETCRE ) ;
+   @ 158, 52 GET oGet[16] VAR aP[15]    OF oDlg PICTURE aP[4];
+      VALID EVAL( bSumar,aP[15] ) ;
       WHEN nFPag <= 2 SIZE 40,10 PIXEL UPDATE
 
    @ 172, 70 BUTTON oGet[13] PROMPT "Aceptar" SIZE 40,12 OF oDlg CANCEL;
@@ -188,6 +188,14 @@ If nPorT # NIL
          MsgStop( "Nro.Documento = NC. + el # de la N.C",">> OJO <<" )
       EndIf
    EndIf
+   oApl:oPag:ABONO     := aTC[08]
+   oApl:oPag:DEDUCCION := aTC[09]
+   oApl:oPag:RETENCION := aTC[10]
+   oApl:oPag:DESCUENTO := aTC[11]
+   oApl:oPag:P_DE_MAS  := aTC[12]
+   oApl:oPag:RETICA    := aTC[13]
+   oApl:oPag:RETIVA    := aTC[14]
+   oApl:oPag:RETCRE    := aTC[15]
 ElseIf nPago > 0
    If (lOk := MsgYesNo( "Graba este Pago" ))
       nAbono := nPago - oApl:oPag:P_DE_MAS
@@ -199,8 +207,6 @@ EndIf
 If lOk
    If Rango( oApl:oPag:FORMAPAGO,2,3 )
       nAbono:= oApl:oPag:ABONO - oApl:oPag:RETIVA
-//    nPorT := Buscar( {"optica",18,"codigo",oApl:oPag:CODBANCO},;
-//                      "bancosd",{"debito","credito"}[oApl:oPag:FORMAPAGO-1],8,,4 )
       nPorT := Buscar( "SELECT " + {"debito","credito"}[oApl:oPag:FORMAPAGO-1] +;
                        STRTRAN( aTC[5],"bco",TRIM(oApl:oPag:CODBANCO) ),"CM",,8,,4 )
       If nPorT == 0

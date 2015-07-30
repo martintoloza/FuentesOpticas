@@ -850,7 +850,8 @@ If !oApl:oFac:lOK
          nAbono += (oApl:oPag:PAGADO    - oApl:oPag:P_DE_MAS)
          nPago  :=  oApl:oPag:ABONO     + oApl:oPag:DEDUCCION +;
                     oApl:oPag:RETENCION + oApl:oPag:DESCUENTO +;
-                    oApl:oPag:RETIVA    + oApl:oPag:RETICA    + oApl:oPag:RETCRE
+                    oApl:oPag:RETIVA    + oApl:oPag:RETICA    +;
+                    oApl:oPag:RETCRE    - oApl:oPag:P_DE_MAS
          nValor += nPago
          oApl:nSaldo -= nPago
          AADD( aPago, { oApl:oPag:ABONO    , oApl:oPag:RETENCION,;
