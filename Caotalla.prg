@@ -5,10 +5,10 @@
 MEMVAR oApl
 
 PROCEDURE CaoTalla()
-   LOCAL aOpc, oDlg, oTL, oGet := ARRAY(7)
+   LOCAL aOpc, oDlg, oTL, oGet := ARRAY(8)
 oTL  := TCompara() ; oTL:NEW()
 aOpc := { { {|| oTL:ArmarInf( oDlg ) },"Precio Público" },;
-          { {|| oTL:NCredito( oDlg ) },"Precio Costo" }  ,;
+          { {|| oTL:NCredito( oGet ) },"Precio Costo" }  ,;
           { {|| oTL:Traslado( oGet ) },"Contabilizar" }  ,;
           { {|| oTL:RCaja( oDlg ) }   ,"Nomina Excel" } }
 DEFINE DIALOG oDlg TITLE "Comparacion precios O.Talla" FROM 0, 0 TO 09,50
@@ -20,7 +20,8 @@ DEFINE DIALOG oDlg TITLE "Comparacion precios O.Talla" FROM 0, 0 TO 09,50
    @ 26, 00 SAY "Comparar Orden Talla A"   OF oDlg RIGHT PIXEL SIZE 80,10
    @ 26, 82 COMBOBOX oGet[3] VAR oTL:aLS[6] ITEMS ArrayCol( aOpc,2 );
       SIZE 48,94 OF oDlg PIXEL
-
+   @ 14,140 CHECKBOX oGet[8] VAR oTL:aLS[10] PROMPT "Ajustar C.Orden" OF oDlg;
+      SIZE 60,12 PIXEL
    @ 26,140 CHECKBOX oGet[4] VAR oTL:aLS[9] PROMPT "Vista Previa" OF oDlg;
       SIZE 60,12 PIXEL
    @ 40, 40 BUTTON oGet[5] PROMPT "Aceptar"  SIZE 44,12 OF oDlg ACTION ;
@@ -41,6 +42,7 @@ CLASS TCompara FROM TContabil
  METHOD NEW( cQry ) Constructor
  METHOD ArmarInf( oDlg )
  METHOD Traslado( oGet )
+ METHOD Reposicion( oGet )
  METHOD NCredito( oGet )
  METHOD Ajustes( aCT,nVal )
  METHOD Facturas( aCT,cOpt )
@@ -52,7 +54,7 @@ METHOD NEW( cQry ) CLASS TCompara
 If cQry == NIL
    Super:New()
    Empresa()
-   ::aLS := { 2,DATE(),DATE(),oApl:oEmp:CODIGOLOC,0,2,"CV","9",.t.,.t.,0 }
+   ::aLS := { 2,DATE(),DATE(),oApl:oEmp:CODIGOLOC,0,2,"CV","9",.t.,.f.,0 }
 ElseIf VALTYPE( cQry ) == "A"
    cQry[1]:DropIndex( "Factura" )
    cQry[1]:Destroy()
@@ -712,9 +714,69 @@ cFac := "SELECT numero_factura, cant_ordenes_o, valor_oftalmica "+;
 */
 RETURN NIL
 
+//5-----------------------------------//
+METHOD Reposicion( oGet ) CLASS TCompara
+   LOCAL aGT, aRes, sCli, sQry, hRes, nL
+sQry := "SELECT numfac, servic, fecfac, orden, precioven - valor "+;
+        "FROM cadtalla "       +;
+        "WHERE orden      > 0" +;
+         " AND precioven  > 0" +;
+         " AND valor      > 0" +;
+         " AND precioven <> valor ORDER BY numfac"
+hRes := If( MSQuery( oApl:oMySql:hConnect,sQry )  ,;
+            MSStoreResult( oApl:oMySql:hConnect ), 0 )
+If (nL := MSNumRows( hRes )) == 0
+   MSFreeResult( hRes )
+   MsgStop( "No hay AJUSTES que Contabilizar" )
+   RETURN .f.
+EndIf
+sCli := "SELECT cliente FROM cadantic "+;
+        "WHERE numero = XX"            +;
+         " AND optica = " + LTRIM(STR(oApl:nEmpresa))
+ aGT := ::BuscaCta( ::aLS[2],If( oApl:nEmpresa == 21, 18, oApl:nEmpresa ),"18" )
+ aGT[2,2] := aGT[3,2] := "890112740"
+::aLS[7] := "AO" ; ::aLS[8] := "18" ; ::aLS[9] := .t.
+While nL > 0
+   aRes := MyReadRow( hRes )
+   AEVAL( aRes, { | xV,nP | aRes[nP] := MyClReadCol( hRes,nP ) } )
+   If aRes[2] > 0
+      aRes[2] := "A." + LTRIM( STR( aRes[1] ) )
+      sQry  := sCli
+   Else
+      aRes[2] := "F." + LTRIM( STR( aRes[1] ) )
+      sQry  := STRTRAN( sCli,"antic" ,"factu" )
+      sQry  := STRTRAN( sQry,"numero","numfac" )
+   EndIf
+   oGet[7]:SetText( aRes[2] )
+      sQry  := Buscar( STRTRAN( sQry,"XX",LTRIM(STR(aRes[1])) ),"CM",,8,,1 )
+   aGT[1,1] := aRes[3]                             //Fecha
+   aGT[1,2] := LTRIM( STR( aRes[1] ) )             //Numfac
+   aGT[1,6] := If( EMPTY( sQry ), "VARIOS",;
+                   ALLTRIM(STRTRAN( sQry,"'"," " )) )
+   If aRes[5] > 0
+      aGT[2,7] := aGT[5,7] := aRes[5]
+      aGT[3,8] := aGT[4,8] := aRes[5]
+      aGT[2,8] := aGT[5,8] := aGT[3,7] := aGT[4,7] := 0
+   Else
+      aRes[5]  *= -1
+      aGT[2,8] := aGT[5,8] := aRes[5]
+      aGT[3,7] := aGT[4,7] := aRes[5]
+      aGT[2,7] := aGT[5,7] := aGT[3,8] := aGT[4,8] := 0
+   EndIf
+   ::BuscaNit( aGT )
+   ::aMV[1,2] := LTRIM( STR( aRes[4] ) )           //Orden
+   ::aMV[2,4] := aRes[2]
+   //MsgInfo( TRANSFORM( ::aMV[2,7],"99,999,999" ) + CRLF +;
+   //         TRANSFORM( ::aMV[2,8],"99,999,999" ),aRes[2] )
+   ::Contable( oGet )
+   nL --
+EndDo
+MSFreeResult( hRes )
+RETURN .f.
+
 //------------------------------------//
 METHOD NCredito( oGet ) CLASS TCompara
-   LOCAL aCT := ARRAY(14)
+   LOCAL aCT := ARRAY(17)
    LOCAL aFac, aRes, hRes, nF, nL, oPC, oRpt
 aCT[1] := oApl:Abrir( "cadtalla","numfac, orden",,.t. )
 aRes := "SELECT c.NUMERO_ORDEN, c.FECHA_DOCUMENTO, r.FACTURA, "+;
@@ -864,11 +926,72 @@ While nL > 0
 EndDo
 MSFreeResult( hRes )
 
+aRes := "SELECT DISTINCTROW t.orden, t.row_id, t.precioven, t.valor FROM cadtalla t "+;
+        "WHERE t.orden IN (SELECT orden FROM cadtalla As Tmp "+;
+        "WHERE orden > 0 GROUP BY orden HAVING COUNT(*)>1) ORDER BY t.orden"
+hRes := If( MSQuery( oApl:oMySql:hConnect,aRes ) ,;
+            MSStoreResult( oApl:oMySql:hConnect ), 0 )
+If (nL  := MSNumRows( hRes )) > 0
+   aRes := MyReadRow( hRes )
+   AEVAL( aRes, { | xV,nP | aRes[nP] := MyClReadCol( hRes,nP ) } )
+   aFac := { aRes[1],0,0,0 }
+EndIf
+While nL > 0
+   If aRes[3] > 0
+      aFac[2] := aRes[2]
+   Else
+      aFac[3] := aRes[2]
+      aFac[4] := aRes[4]
+   EndIf
+   If (nL --) > 1
+      aRes := MyReadRow( hRes )
+      AEVAL( aRes, {| xV,nP | aRes[nP] := MyClReadCol( hRes,nP ) } )
+   EndIf
+   If nL == 0 .OR. aFac[1] # aRes[1]
+      Guardar( "UPDATE cadtalla SET valor = valor + " + LTRIM(STR(aFac[4]))+;
+              " WHERE row_id = " + LTRIM(STR(aFac[2])),"cadtalla" )
+      Guardar( "DELETE FROM cadtalla WHERE row_id = " + LTRIM(STR(aFac[3])),"cadtalla" )
+      aFac := { aRes[1],0,0,0 }
+   EndIf
+EndDo
+MSFreeResult( hRes )
+
+aRes := "SELECT orden, row_id FROM cadtalla "+;
+        "WHERE fecdoc = '' AND orden > 0 ORDER BY numfac"
+hRes := If( MSQuery( oApl:oMySql:hConnect,aRes ) ,;
+            MSStoreResult( oApl:oMySql:hConnect ), 0 )
+nL   := MSNumRows( hRes )
+While nL > 0
+   aRes := MyReadRow( hRes )
+   AEVAL( aRes, { | xV,nP | aRes[nP] := MyClReadCol( hRes,nP ) } )
+   aRes[1] := "SELECT FECHA_DOCUMENTO, VALOR_TOTAL, VALOR_DESCTOS "+;
+              "FROM ordenes_c  "         +;
+              "WHERE ESTADO      != 'R'" +;
+               " AND NUMERO_ORDEN = " + LTRIM(STR(aRes[1]))
+   ConectaOn()
+   oPC := TDbOdbc()
+   oPC:New( aRes[1],oApl:oODbc )
+   oPC:End()
+   If !oPC:lEof
+      aCT[3]  := oPC:FieldGet(1)
+      aRes[1] := "UPDATE cadtalla SET fecdoc = '" + NtChr( aCT[3],"2" )    +;
+                                "', valor = " + LTRIM(STR(oPC:FieldGet(2)))+;
+                                ", desmon = " + LTRIM(STR(oPC:FieldGet(3)))
+      If !(aCT[3] >= ::aLS[2] .AND. aCT[3] <= ::aLS[3])
+         aRes[1] += ", cantloc = 1"
+      EndIf
+      Guardar( aRes[1]+" WHERE row_id = " + LTRIM(STR(aRes[2])),"cadtalla" )
+   EndIf
+   nL --
+EndDo
+MSFreeResult( hRes )
+
 oRpt := TDosPrint()
 oRpt:New( oApl:cPuerto,oApl:cImpres,{"COMPARACION COSTOS ORDENES DE TALLA" ,;
           "DESDE " + NtChr(::aLS[2],"2") + " HASTA " + NtChr(::aLS[3],"2" ),;
           "FACTURA  NRO.ORDEN  FEC.OPTICA  FEC.LABORA.     COSTO OPT.  COSTO LOC."},::aLS[9] )
-aRes := "SELECT numfac, orden, clase, fecfac, fecdoc, precioven, valor, ppubli, desmon, servic "+;
+aRes := "SELECT numfac, orden, clase, fecfac, fecdoc, precioven, "+;
+               "valor, ppubli, desmon, servic, cantloc "          +;
         "FROM cadtalla WHERE numfac >= 0 ORDER BY numfac, orden"
 oPC  := "SELECT SUM(precioven) FROM cadtalla WHERE consec = [FAC] AND clase = ''"
 hRes := If( MSQuery( oApl:oMySql:hConnect,aRes ) ,;
@@ -910,6 +1033,10 @@ While nL > 0
          nF := INT(aRes[10]) + 11
          aCT[nF] += aRes[6]
       EndIf
+      If aRes[11] >= 1
+         aCT[16] += aRes[6]
+         aCT[17] += aRes[7]
+      EndIf
    EndIf
    If (nL --) > 1
       aRes := MyReadRow( hRes )
@@ -921,6 +1048,9 @@ While nL > 0
          aCT[6] ++
          FOR nF := 1 TO LEN( aFac )
             aCT[4] := aFac[nF,6] - aFac[nF,7]
+            If aFac[nF,2] > 0 .AND. aFac[nF,6] > 0 .AND. aFac[nF,7] > 0
+               aCT[15] += aCT[4]
+            EndIf
             oRpt:Say( oRpt:nL,00,STR(aFac[nF,1],7) + STR(aFac[nF,2],10) )
             oRpt:Say( oRpt:nL,18,aFac[nF,3] )
             oRpt:Say( oRpt:nL,20,aFac[nF,4] )
@@ -941,22 +1071,31 @@ While nL > 0
 EndDo
 MSFreeResult( hRes )
  aRes := { "ANTICIPOS FACTURADOS","DESCUENTOS LOC"      ,"SIN ORDEN EN OPTICA",;
-           "GARANTIAS O REGALOS" ,"FACTURADOS EN EL MES","SIN FACTURAR" }
- aCT[4] := aCT[7] - aCT[8]
+           "GARANTIAS O REGALOS" ,"FACTURADOS EN EL MES","SIN FACTURAR"       ,;
+           "VALOR PARA AJUSTAR"  ,"MES DIFERENTE EN LOC" }
+ aCT[7] -= aCT[11]
+ aCT[8] -= aCT[17]
+ aCT[3] := aCT[07] - aCT[8]
+ aCT[4] := aCT[15] - aCT[3]
  oRpt:Say(  oRpt:nL,00,REPLICATE( "-",83 ),,,1 )
- oRpt:Separator( 1,7 )
+ oRpt:Separator( 1,8 )
  oRpt:Say(  oRpt:nL,20,TRANSFORM(aCT[05],"999,999") )
  oRpt:Say(  oRpt:nL,32,TRANSFORM(aCT[06],"999,999") )
  oRpt:Say(  oRpt:nL,47,TRANSFORM(aCT[07],"999,999,999") )
  oRpt:Say(  oRpt:nL,59,TRANSFORM(aCT[08],"999,999,999") )
- oRpt:Say(  oRpt:nL,71,TRANSFORM(aCT[04],"999,999,999") )
-FOR nF := 1 TO 6
+ oRpt:Say(  oRpt:nL,71,TRANSFORM(aCT[03],"999,999,999") )
+FOR nF := 1 TO 8
    oRpt:Say(++oRpt:nL,23,aRes[nF] )
    oRpt:Say(  oRpt:nL,47,TRANSFORM(aCT[nF+8],"999,999,999") )
 NEXT nF
+ nF := oRpt:nL -1
+ oRpt:Say(  nF     ,71,TRANSFORM(aCT[04],"999,999,999") )
+ oRpt:Say(  oRpt:nL,59,TRANSFORM(aCT[17],"999,999,999") )
  oRpt:NewPage()
  oRpt:End()
-//::NEW( aCT )
+If ::aLS[10] .AND. ::aLS[2] >= CTOD("01.07.2015")
+   ::Reposicion( oGet )
+EndIf
 RETURN NIL
 
 //------------------------------------//

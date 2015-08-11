@@ -1259,7 +1259,7 @@ While nL > 0
             aGT[8,7] += If( aPG[nC,8] == "A", aGT[1,6], 0 )
             aGT[9,8] += (aGT[1,6] - aPG[nC,17])
          Else
-            aGT[8,8] +=  aGT[1,6]
+            aGT[8,8] += (aGT[1,6] - aPG[nC,17])
          EndIf
       EndIf
       If aPG[nC,17] > 0

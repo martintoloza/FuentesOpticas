@@ -435,7 +435,7 @@ Else
             " AND c.optica = u.optica AND c.numero = u.remplaza"
    MSQuery( oApl:oMySql:hConnect,cQry )
 EndIf
-cQry := "SELECT numfac, fecpag, pagado-IFNULL(p.p_de_mas,0), tipo FROM cadpagos "+;
+cQry := "SELECT numfac, fecpag, pagado-IFNULL(p_de_mas,0), tipo FROM cadpagos "+;
         "WHERE optica  = "  + LTRIM(STR( aTin[1]))+;
          " AND fecpag >= " + xValToChar( aTin[2] )+;
          " AND fecpag <= " + xValToChar( aTin[3] )+;
