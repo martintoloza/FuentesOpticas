@@ -424,24 +424,28 @@ FUNCTION Grupos( cCod )
 RETURN If( cCod == "5", "2", If( cCod == "2", "5", cCod ) )
 
 //------------------------------------//
-FUNCTION PrecioVenta( oB,oDlg,lGrupo )
+FUNCTION PrecioVenta( oB,oDlg,lGrupo,nPV )
    LOCAL cQry, cTipo, hRes
    DEFAULT lGrupo := .f.
 If !lGrupo
-   cTipo := If( oB:TIPOMONTU == " ", "X", oB:TIPOMONTU )
-   cQry  := "SELECT porcentaje, incremento FROM cadtabla"+;
-            " WHERE tipo = '" + (cTipo)                  +;
-       "' OR (costodesde <= " + LTRIM(STR(oB:PCOSTO))    +;
-        " AND costohasta >= " + LTRIM(STR(oB:PCOSTO))    + ") LIMIT 1"
-   hRes := If( MSQuery( oApl:oMySql:hConnect,cQry ) ,;
-               MSStoreResult( oApl:oMySql:hConnect ), 0 )
-   If MSNumRows( hRes ) > 0
-      cTipo := MyReadRow( hRes )
-      AEVAL( cTipo, { | xV,nP | cTipo[nP] := MyClReadCol( hRes,nP ) } )
-      oB:PVENTA := ROUND( oB:PCOSTO * cTipo[1],0 ) + cTipo[2]
-      oB:PVENTA := Redondear( oB:PVENTA,500,1000 )
+   If nPV == NIL .OR. nPV == 0
+      cTipo := If( oB:TIPOMONTU == " ", "X", oB:TIPOMONTU )
+      cQry  := "SELECT porcentaje, incremento FROM cadtabla"+;
+               " WHERE tipo = '" + (cTipo)                  +;
+          "' OR (costodesde <= " + LTRIM(STR(oB:PCOSTO))    +;
+           " AND costohasta >= " + LTRIM(STR(oB:PCOSTO))    + ") LIMIT 1"
+      hRes := If( MSQuery( oApl:oMySql:hConnect,cQry ) ,;
+                  MSStoreResult( oApl:oMySql:hConnect ), 0 )
+      If MSNumRows( hRes ) > 0
+         cTipo := MyReadRow( hRes )
+         AEVAL( cTipo, { | xV,nP | cTipo[nP] := MyClReadCol( hRes,nP ) } )
+         oB:PVENTA := ROUND( oB:PCOSTO * cTipo[1],0 ) + cTipo[2]
+         oB:PVENTA := Redondear( oB:PVENTA,500,1000 )
+      EndIf
+      MSFreeResult( hRes )
+   Else
+         oB:PVENTA := nPV
    EndIf
-   MSFreeResult( hRes )
    oDlg:Update()
 EndIf
 RETURN .t.

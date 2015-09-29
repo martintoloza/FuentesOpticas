@@ -237,7 +237,6 @@ METHOD Dialog() CLASS TListFac
    LOCAL aOK, hDC := GetDC( 0 )
    aOK   := { .f.,If( TRIM( oApl:cUser ) == "Martin", .t., .f. ) }
  ::aFont := GetFontNames( hDC )
- ::cFont := "Courier New"
  ::nAncho:= oApl:oEmp:ANCHO    //2400 215.9
  ::nAlto := oApl:oEmp:ALTURA   //1490 139.7
 DEFINE DIALOG ::oDlg TITLE "Impresión"

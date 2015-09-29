@@ -347,13 +347,11 @@ DEFINE DIALOG oDie TITLE aEd[1] FROM 0, 0 TO 22,50
              ::PasaRef( .f. ,oDie )                             ,;
              oGet[8]:Refresh(), oGet[14]:oJump := oGet[10], .t. );
       WHEN ::oMtc:CIF > 0  SIZE 30,10 PIXEL UPDATE
-//           ::oMtd:PCOSTO := ROUND( ::oMtc:FFV * ::oMtd:USD,0 ),;
-//           PrecioVenta( ::oMtd,oDie,oApl:oNit:GRUPO )         ,;
-//           ::oMtd:PCOSTO := ROUND( ::oMtc:CIF * ::oMtd:USD,2 ),;
    @  86,00 SAY "Precio Costo" OF oDie RIGHT PIXEL SIZE 56,8
    @  86,60 GET oGet[08] VAR ::oMtd:PCOSTO  OF oDie PICTURE "999,999,999.99";
-      VALID (::oMtd:TIPOMONTU := oAr:aTipo[nTipo,2]     ,;
-             PrecioVenta( ::oMtd,oDie,oApl:oNit:GRUPO )) ;
+      VALID (::oMtd:TIPOMONTU := oAr:aTipo[nTipo,2]   ,;
+             PrecioVenta( ::oMtd,oDie,oApl:oNit:GRUPO ,;
+                      If( ::oMtc:CODIGO_NIT == 1569, ::aCam[10], 0 ) )) ;
       SIZE 40,12 PIXEL UPDATE
    @ 100,00 SAY "Precio Venta" OF oDie RIGHT PIXEL SIZE 56,8
    @ 100,60 GET oGet[09] VAR ::oMtd:PVENTA  OF oDie PICTURE "999,999,999";
@@ -383,8 +381,17 @@ RETURN NIL
 //------------------------------------//
 METHOD Grabar( lNew ) CLASS TMontura
    LOCAL nCant := ::oMtd:CANTIDAD
-::oMtd:PPUBLI := If( oApl:oNit:GRUPO, oApl:oInv:PPUBLI,;
-                 ROUND( ::oMtd:PVENTA*::aCab[5],0 ) )
+If oApl:oNit:GRUPO
+   ::oMtd:PPUBLI := oApl:oInv:PPUBLI
+ElseIf ::oMtc:CODIGO_NIT == 1569 .AND.;
+   RIGHT( STR( ::oMtd:PVENTA,10 ),3 ) == "000"
+   // OptiCalia
+   ::oMtd:PPUBLI := ::aCam[10] := ::oMtd:PVENTA
+   ::oMtd:PVENTA -= ROUND( ::aCam[10]*::aCab[5],0 )
+Else
+   ::aCam[10]    := ::oMtd:PVENTA
+   ::oMtd:PPUBLI := ROUND( ::aCam[10]*::aCab[5],0 )
+EndIf
 If lNew
    ::GrabaCab()
    ::nSub += (::oMtd:CANTIDAD * ::oMtd:PCOSTO)
@@ -393,7 +400,7 @@ If lNew
    ::oMtd:Append( .t. )
    ::aCam := { ::oMtd:MARCA ,::oMtd:CANTIDAD ,::oMtd:REFER  ,::oMtd:MATERIAL,;
                ::oMtd:SEXO  ,::oMtd:TIPOMONTU,::oMtd:TAMANO ,::oMtd:IDENTIF ,;
-               ::oMtd:PCOSTO,::oMtd:PVENTA   ,::oMtd:USD }
+               ::oMtd:PCOSTO,::aCam[10]      ,::oMtd:USD }
 Else
    If ::oMtd:INDICA # " "      .AND. (::oMtd:MARCA  # ::aCam[01] .OR.;
       ::oMtd:REFER  # ::aCam[03] .OR. ::oMtd:TAMANO # ::aCam[07] .OR.;

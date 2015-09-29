@@ -831,7 +831,8 @@ While oApl:nSaldo > 0
       Exit
    EndIf
 EndDo
-If (nPago := oApl:nEmpresa) == 21
+If (nPago := oApl:nEmpresa) == 21  .AND. ;
+   oApl:oEmp:FEC_HOY <= CTOD("31.08.2015")
    If oApl:nSaldo > 0
       MsgStop( "NO SE PUEDE SUBIR CON SALDO","ANTICIPO DE FOCA" )
       RETURN NIL

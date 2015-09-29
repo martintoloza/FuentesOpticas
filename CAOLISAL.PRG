@@ -2,6 +2,7 @@
 // Notas....: Listo Saldos de Cartera y Facturas Canceladas.
 #include "FiveWin.ch"
 #include "Btnget.ch"
+#include "Utilprn.CH"
 
 MEMVAR oApl
 
@@ -38,7 +39,7 @@ DEFINE DIALOG oDlg TITLE aOpc[nOpc,2] FROM 0, 0 TO 12,46
    @ 50,122 CHECKBOX oGet[6] VAR oC:aLS[3] PROMPT "Vista Previa" OF oDlg;
        SIZE 60,10 PIXEL
    @ 62, 00 SAY "CLASE DE LISTADO"   OF oDlg RIGHT PIXEL SIZE 90,10
-   @ 62, 92 COMBOBOX oGet[7] VAR oC:aLS[8] ITEMS { "MS-DOS","Excel","S.Salud" };
+   @ 62, 92 COMBOBOX oGet[7] VAR oC:aLS[8] ITEMS { "Matriz","Laser","Excel","S.Salud" };
       SIZE 48,90 OF oDlg PIXEL
    @ 76, 50 BUTTON oGet[8] PROMPT "Aceptar"  SIZE 44,12 OF oDlg ACTION;
       ( oGet[8]:Disable(), EVAL( aOpc[nOpc,1] ), oGet[8]:Enable(),;
@@ -51,15 +52,17 @@ ACTIVATE DIALOG oDlg CENTERED NOMODAL
 RETURN
 
 //------------------------------------//
-CLASS TCartera
+CLASS TCartera FROM TIMPRIME
 
  DATA aLS, aGT, aVG, aRS, hRes, nL
 
  METHOD NEW() Constructor
- METHOD CarteraDOS()
- METHOD CarteraXLS()
- METHOD CVariosDOS()
- METHOD CVariosXLS()
+ METHOD Listo_Car()
+ METHOD Laser_Car()
+ METHOD Excel_Car()
+ METHOD Listo_Var()
+ METHOD Laser_Var()
+ METHOD Excel_Var()
  METHOD SuperSalud()
  METHOD ListoCan()
 ENDCLASS
@@ -93,8 +96,9 @@ Else
                                 " AND m.tipo   = f.tipo"              +;
                                 " AND m.anomes <= '" + NtChr( ::aLS[1],"1" )+;
             "') AND s.saldo <> 0"
-   If (nLis := ::aLS[8]) <= 2
+   If (nLis := ::aLS[8]) <= 3
       If ::aLS[2] == 999
+/*
          cQry := "SELECT f.codigo_cli, f.cliente, f.fechoy, s.saldo "+;
                  "FROM cadfactm s, cadfactu f "                  +;
                  "WHERE f.optica "    + cQry                     +;
@@ -102,7 +106,17 @@ Else
                   " AND f.tipo    = " + xValToChar( oApl:Tipo )  +;
                   " AND f.codigo_nit = 123" + cSal               +;
                  " ORDER BY f.codigo_cli"
-         nLis += 2
+*/
+         cQry := "SELECT h.nroiden, CONCAT(h.nombres, ' ', h.apellidos), "+;
+                        "f.cliente, f.codigo_cli, f.fechoy, s.saldo "+;
+                 "FROM cadfactm s, cadfactu f LEFT JOIN historia h " +;
+                   "ON f.codigo_cli = h.codigo_nit "                 +;
+                 "WHERE f.optica "    + cQry                         +;
+                  " AND f.fechoy <= " + xValToChar( ::aLS[1] )       +;
+                  " AND f.tipo    = " + xValToChar( oApl:Tipo )      +;
+                  " AND f.codigo_nit = 123" + cSal                   +;
+                 " ORDER BY f.cliente, f.codigo_cli"
+         nLis += 3
       Else
          ::aLS[7] := If( ::aLS[2] == 99, "S", ::aLS[7] )
 
@@ -133,7 +147,7 @@ Else
                   " AND f.tipo    = " + xValToChar( oApl:Tipo )  +;
                   " AND f.codigo_nit <> 123" + cSal              +;
                  " ORDER BY DV, NIT"
-         nLis := 5
+         nLis := 7
    EndIf
    ::hRes := If( MSQuery( oApl:oMySql:hConnect,cQry ) ,;
                  MSStoreResult( oApl:oMySql:hConnect ), 0 )
@@ -145,8 +159,9 @@ Else
    ::aGT := { {0,0,0,0,0,0,0},{0,0,0,0,0,0,0} }
    ::aRS := MyReadRow( ::hRes )
    AEVAL( ::aRS, { | xV,nP | ::aRS[nP] := MyClReadCol( ::hRes,nP ) } )
-   cQry := { {|| ::CarteraDOS() },{|| ::CarteraXLS() },;
-             {|| ::CVariosDOS() },{|| ::CVariosXLS() },{|| ::SuperSalud() } }
+   cQry := { {|| ::Listo_Car() },{|| ::Laser_Car() },{|| ::Excel_Car() },;
+             {|| ::Listo_Var() },{|| ::Laser_Var() },{|| ::Excel_Var() },;
+             {|| ::SuperSalud() } }
    EVAL( cQry[nLis] )
    MSFreeResult( ::hRes )
    ::aLS[4] := 0
@@ -154,7 +169,7 @@ EndIf
 RETURN NIL
 
 //------------------------------------//
-METHOD CarteraDOS() CLASS TCartera
+METHOD Listo_Car() CLASS TCartera
    LOCAL oRpt, aVence := { 0,0,0,0,0,0,0 }, nL
 oRpt := TDosPrint()
 oRpt:New( oApl:cPuerto,oApl:cImpres,{"REPORTE DE CUENTAS POR COBRAR",;
@@ -235,7 +250,109 @@ oRpt:End()
 RETURN NIL
 
 //------------------------------------//
-METHOD CarteraXLS() CLASS TCartera
+METHOD Laser_Car() CLASS TCartera
+   LOCAL aRS, aVence := { 0,0,0,0,0,0,0 }, nL
+ ::aEnc := { .t., oApl:cEmpresa, oApl:oEmp:Nit      ,;
+             "REPORTE DE CUENTAS POR COBRAR"  , NtChr( ::aLS[1],"3" )  ,;
+             { .T., 9.4,"FACTURA" }           , { .F., 9.8,"F E C H A" }    ,;
+             { .F.,11.7,"Nombre del Cliente" }, { .T.,18.0,"Total Factura" },;
+             { .T.,20.5,"Saldo Factura" } }
+//If ::aLS[6]
+//   oRpt:aEnc[3] := STUFF( oRpt:aEnc[3],1,LEN( ::aVG[1] ),::aVG[1] )
+//EndIf
+ ::aLS[5] := ::aRS[1]
+ ::aVG[1] := TRANSFORM( ::aRS[2],"999,999,999-" ) + STR(::aRS[3],1)
+ ::aVG[3] := ::aRS[4]
+ ::Init( ::aEnc[4], .f. ,, !::aLS[3] ,,, ::aLS[3], 5 )
+ ::nMD := 20.5
+ PAGE
+While ::nL > 0
+   oApl:nSaldo := ::aRS[9]
+   Vence( ::aLS[1] - ::aRS[6],@aVence )
+   If ::aLS[7] == "N"
+      ::Cabecera( .t.,0.42 )
+      If ::aGT[1,5] == 0
+         UTILPRN ::oUtil Self:nLinea, 0.5 SAY LEFT(::aLS[5],34)
+         UTILPRN ::oUtil Self:nLinea, 5.9 SAY ::aVG[1]
+      EndIf
+      UTILPRN ::oUtil Self:nLinea, 9.4 SAY   STR( ::aRS[5] )            RIGHT
+      UTILPRN ::oUtil Self:nLinea, 9.6 SAY NtChr( ::aRS[6],"2" )
+      UTILPRN ::oUtil Self:nLinea,11.7 SAY  LEFT( ::aRS[7],20 )
+      UTILPRN ::oUtil Self:nLinea,18.0 SAY TRANSFORM(::aRS[8],::aVG[2]) RIGHT
+      UTILPRN ::oUtil Self:nLinea,20.5 SAY TRANSFORM(::aRS[9],::aVG[2]) RIGHT
+   EndIf
+   ::aGT[1,5] += ::aRS[9]
+   If (::nL --) > 1
+      ::aRS := MyReadRow( ::hRes )
+      AEVAL( ::aRS, {| xV,nP | ::aRS[nP] := MyClReadCol( ::hRes,nP ) } )
+   EndIf
+   If ::nL == 0 .OR. ::aRS[1] # ::aLS[5]
+      AEVAL( aVence, {|nVal,nP| ::aGT[2,nP] += nVal } )
+      If ::aLS[7] == "N"
+         ::Cabecera( .t.,0.84 )
+         UTILPRN ::oUtil SELECT ::aFnt[6]
+         UTILPRN ::oUtil Self:nLinea,15.0 SAY "TOTAL CLIENTE --> $"
+         UTILPRN ::oUtil Self:nLinea,20.5 SAY TRANSFORM( ::aGT[1,5],::aVG[2] ) RIGHT
+         UTILPRN ::oUtil SELECT ::aFnt[5]
+      Else
+         ::Cabecera( .t.,0.42 )
+         UTILPRN ::oUtil Self:nLinea, 0.5 SAY LEFT(::aLS[5],34)
+         UTILPRN ::oUtil Self:nLinea, 5.9 SAY ::aVG[1]
+         UTILPRN ::oUtil Self:nLinea,20.5 SAY TRANSFORM( ::aGT[1,5],::aVG[2] ) RIGHT
+         //   Vence( 0,aVence,50,oRpt )
+      EndIF
+      ::nLinea += 0.42
+      If ::aVG[3]
+         ::aGT[1,3] += ::aGT[1,5]
+      ElseIf ::aLS[4] > 0
+         ::aGT[1,2] += ::aGT[1,5]
+      EndIf
+      AFILL( aVence,0 )
+      ::aGT[1,4] ++
+      ::aGT[1,5] := 0
+      ::aLS[5] := ::aRS[1]
+      ::aLS[4] := ::aRS[2]
+      ::aVG[1] := TRANSFORM( ::aRS[2],"999,999,999-" ) + STR(::aRS[3],1)
+      ::aVG[3] := ::aRS[4]
+   EndIf
+EndDo
+MSFreeResult( ::hRes )
+If ::aGT[1,4] > 0
+   FOR nL := 1 TO 7
+      aVence[nL] := ::aGT[2,nL]
+   NEXT nL
+   ::Cabecera( .t.,0.1,4.20,20.5 )
+   UTILPRN ::oUtil Self:nLinea, 0.6 SAY STR( ::aGT[1,4],3 ) + "  SALDOS"
+   UTILPRN ::oUtil Self:nLinea,20.5 SAY TRANSFORM( ::aGT[2,7],::aVG[2] ) RIGHT
+   ::nLinea += 0.84
+   UTILPRN ::oUtil Self:nLinea, 2.0 SAY "TOTAL OPTICAS GRUPO -------> $"
+   UTILPRN ::oUtil Self:nLinea, 9.3 SAY TRANSFORM( ::aGT[1,3],::aVG[2] ) RIGHT
+   ::nLinea += 0.84
+   UTILPRN ::oUtil Self:nLinea, 2.0 SAY "TOTAL EMPRESAS ------------> $"
+   UTILPRN ::oUtil Self:nLinea, 9.3 SAY TRANSFORM( ::aGT[1,2],::aVG[2] ) RIGHT
+   ::nLinea += 0.84
+   UTILPRN ::oUtil Self:nLinea, 2.0 SAY "TOTAL CUENTAS POR COBRAR --> $"
+   UTILPRN ::oUtil Self:nLinea, 9.3 SAY TRANSFORM( ::aGT[2,7],::aVG[2] ) RIGHT
+
+   aRS := { "A 30 Dias","A 60 Dias","A 90 Dias","A 180 Dias","A 360 Dias","Sobre 360 Dias",;
+            ::nLinea+0.84, 3.5 }
+   ::nLinea += 1.26
+   FOR nL := 1 TO 6
+      UTILPRN ::oUtil aRS[7]     , aRS[8] SAY aRS[nL]                             RIGHT
+      UTILPRN ::oUtil Self:nLinea, aRS[8] SAY TRANSFORM(aVence[nL],"999,999,999") RIGHT
+      If aVence[7]  > 0
+         aVence[nL] := ROUND( aVence[nL]/aVence[7]*100,2 )
+         UTILPRN ::oUtil aRS[7]+0.84,aRS[8] SAY TRANSFORM(aVence[nL],"999.99%") RIGHT
+      EndIf
+      aRS[8] += 2.4
+   NEXT nL
+EndIf
+   ENDPAGE
+IMPRIME END .F.
+RETURN NIL
+
+//------------------------------------//
+METHOD Excel_Car() CLASS TCartera
    LOCAL aVence, nF := 6, nL := 1, oRpt
 aVence := cFilePath( GetModuleFileName( GetInstance() )) + "Test1.xls"
 oRpt := TExcelScript():New()
@@ -363,32 +480,36 @@ EndIf
 RETURN NIL
 
 //------------------------------------//
-METHOD CVariosDOS() CLASS TCartera
+METHOD Listo_Var() CLASS TCartera
    LOCAL aHis, aVence := { 0,0,0,0,0,0,0 }, oRpt
 oRpt := TDosPrint()
 oRpt:New( oApl:cPuerto,oApl:cImpres,{"REPORTE DE CUENTAS POR COBRAR",NtChr( ::aLS[1],"3" ),;
           " Doc. Identidad N O M B R E                       A 30 Dias    "+;
           "A 60 Dias    A 90 Dias   A 180 Dias   A 360 Dias Sobre 360 Dias"},::aLS[3],1,2 )
 //3456789012345 123456789012345678901234567890  999,999,999  999,999,999  999,999,999  999,999,999  999,999,999
- ::aLS[4] := ::aRS[1]
- ::aLS[5] := ::aRS[2]
+ ::aLS[4] := ::aRS[4]
+ ::aLS[5] := ::aRS[1]
+ ::aLS[7] := If( EMPTY( ::aRS[2] ), ::aRS[3], ::aRS[2] )
 While ::nL > 0
-   oApl:nSaldo := ::aRS[4]
-   Vence( ::aLS[1] - ::aRS[3],@aVence )
+   oApl:nSaldo := ::aRS[6]
+   Vence( ::aLS[1] - ::aRS[5],@aVence )
    If (::nL --) > 1
       ::aRS := MyReadRow( ::hRes )
       AEVAL( ::aRS, {| xV,nP | ::aRS[nP] := MyClReadCol( ::hRes,nP ) } )
    EndIf
-   If ::nL == 0 .OR. ::aRS[1] # ::aLS[4]
-      aHis := Buscar( "SELECT nroiden, apellidos, nombres FROM historia "+;
+   If ::nL == 0 .OR. ::aRS[4] # ::aLS[4]
+/*
+      aHis := Buscar( "SELECT nroiden, CONCAT(apellidos, ' ', nombres) FROM historia "+;
                       "WHERE codigo_nit = " + LTRIM(STR(::aLS[4])),"CM",,8 )
       If LEN( aHis ) == 0
-         aHis := { "",::aLS[5],"" }
+         aHis := { "",::aLS[5] }
       EndIf
-      //AEval( aVence, {|nVal,nP| aGT[2,nP] += nVal } )
-      oRpt:Titulo( 130 )
       oRpt:Say( oRpt:nL, 00,aHis[1] )
-      oRpt:Say( oRpt:nL, 16,XTRIM( aHis[2] ) + ALLTRIM( aHis[3] ) )
+      oRpt:Say( oRpt:nL, 16,aHis[2] )
+*/
+      oRpt:Titulo( 130 )
+      oRpt:Say( oRpt:nL, 00,::aLS[5] )
+      oRpt:Say( oRpt:nL, 16,::aLS[7] )
       oRpt:Say( oRpt:nL, 48,TRANSFORM(aVence[1],"999,999,999") )
       oRpt:Say( oRpt:nL, 61,TRANSFORM(aVence[2],"999,999,999") )
       oRpt:Say( oRpt:nL, 74,TRANSFORM(aVence[3],"999,999,999") )
@@ -397,8 +518,9 @@ While ::nL > 0
       oRpt:Say( oRpt:nL,113,TRANSFORM(aVence[6],"999,999,999") )
       oRpt:nL ++
       AFILL( aVence,0 )
-      ::aLS[4] := ::aRS[1]
-      ::aLS[5] := ::aRS[2]
+      ::aLS[4] := ::aRS[4]
+      ::aLS[5] := ::aRS[1]
+      ::aLS[7] := If( EMPTY( ::aRS[2] ), ::aRS[3], ::aRS[2] )
    EndIf
 EndDo
 oRpt:NewPage()
@@ -406,7 +528,61 @@ oRpt:End()
 RETURN NIL
 
 //------------------------------------//
-METHOD CVariosXLS() CLASS TCartera
+METHOD Laser_Var() CLASS TCartera
+   LOCAL aHis, aVence := { 0,0,0,0,0,0,0 }, nL
+ ::aEnc := { .t., oApl:cEmpresa, oApl:oEmp:Nit      ,;
+             "REPORTE DE CUENTAS POR COBRAR" , NtChr( ::aLS[1],"3" ) ,;
+             { .F., 0.5,"Doc.Identidad" }, { .F., 3.0,"N O M B R E" },;
+             { .T., 8.6,"A 30 Dias" }    , { .T.,11.0,"A 60 Dias" }  ,;
+             { .T.,13.4,"A 90 Dias" }    , { .T.,15.8,"A 180 Dias" } ,;
+             { .T.,18.2,"A 360 Dias" }   , { .T.,20.6,"Sobre 360 Dias" } }
+ ::aLS[4] := ::aRS[4]
+ ::aLS[5] := ::aRS[1]
+ ::aLS[7] := If( EMPTY( ::aRS[2] ), ::aRS[3], ::aRS[2] )
+ ::Init( ::aEnc[4], .f. ,, !::aLS[3] ,,, ::aLS[3], 5 )
+ ::nMD := 20.6
+ PAGE
+While ::nL > 0
+   oApl:nSaldo := ::aRS[6]
+   Vence( ::aLS[1] - ::aRS[5],@aVence )
+   If (::nL --) > 1
+      ::aRS := MyReadRow( ::hRes )
+      AEVAL( ::aRS, {| xV,nP | ::aRS[nP] := MyClReadCol( ::hRes,nP ) } )
+   EndIf
+   If ::nL == 0 .OR. ::aRS[4] # ::aLS[4]
+      ::Cabecera( .t.,0.42 )
+      UTILPRN ::oUtil Self:nLinea, 2.8 SAY ALLTRIM( ::aLS[5] )  RIGHT
+      UTILPRN ::oUtil Self:nLinea, 3.0 SAY LEFT( ::aLS[7],22 )
+      UTILPRN ::oUtil Self:nLinea,08.6 SAY TRANSFORM(aVence[1],"@Z 999,999,999") RIGHT
+      UTILPRN ::oUtil Self:nLinea,11.0 SAY TRANSFORM(aVence[2],"@Z 999,999,999") RIGHT
+      UTILPRN ::oUtil Self:nLinea,13.4 SAY TRANSFORM(aVence[3],"@Z 999,999,999") RIGHT
+      UTILPRN ::oUtil Self:nLinea,15.8 SAY TRANSFORM(aVence[4],"@Z 999,999,999") RIGHT
+      UTILPRN ::oUtil Self:nLinea,18.2 SAY TRANSFORM(aVence[5],"@Z 999,999,999") RIGHT
+      UTILPRN ::oUtil Self:nLinea,20.6 SAY TRANSFORM(aVence[6],"@Z 999,999,999") RIGHT
+      AEVAL( aVence, {|nVal,nP| ::aGT[1,nP] += nVal } )
+      AFILL( aVence,0 )
+      ::aGT[2,1] ++
+      ::aLS[4] := ::aRS[4]
+      ::aLS[5] := ::aRS[1]
+      ::aLS[7] := If( EMPTY( ::aRS[2] ), ::aRS[3], ::aRS[2] )
+   EndIf
+EndDo
+   ::Cabecera( .t.,0.42,1.26,20.6 )
+   UTILPRN ::oUtil Self:nLinea, 1.6 SAY STR( ::aGT[2,1],3 ) + "  SALDOS"
+   aHis := { 8.6 }
+   FOR nL := 1 TO 6
+      UTILPRN ::oUtil Self:nLinea, aHis[1] SAY TRANSFORM(::aGT[1,nL],"999,999,999") RIGHT
+      aHis[1] += 2.4
+   NEXT nL
+   ::nLinea += 0.84
+   UTILPRN ::oUtil Self:nLinea, 1.8 SAY "TOTAL CLIENTES VARIOS -----> $"
+   UTILPRN ::oUtil Self:nLinea, 8.6 SAY TRANSFORM( ::aGT[1,7],"999,999,999" ) RIGHT
+   ENDPAGE
+IMPRIME END .F.
+RETURN NIL
+
+//------------------------------------//
+METHOD Excel_Var() CLASS TCartera
    LOCAL aHis, aVence := { 0,0,0,0,0,0,0 }, nC, nF := 5, oRpt
 aHis := cFilePath( GetModuleFileName( GetInstance() )) + "Test1.xls"
 oRpt := TExcelScript():New()
@@ -427,33 +603,27 @@ oRpt:Say(  5, 5, "A  90 Dias" )
 oRpt:Say(  5, 6, "A 180 Dias" )
 oRpt:Say(  5, 7, "A 360 Dias" )
 oRpt:Say(  5, 8, "Sobre 360 Dias" )
- ::aLS[4] := ::aRS[1]
- ::aLS[5] := ::aRS[2]
+ ::aLS[4] := ::aRS[4]
+ ::aLS[5] := ::aRS[1]
+ ::aLS[7] := If( EMPTY( ::aRS[2] ), ::aRS[3], ::aRS[2] )
  ::aVG[2] := "#,###.##"
 While ::nL > 0
-   oApl:nSaldo := ::aRS[4]
-   Vence( ::aLS[1] - ::aRS[3],@aVence )
+   oApl:nSaldo := ::aRS[6]
+   Vence( ::aLS[1] - ::aRS[5],@aVence )
    If (::nL --) > 1
       ::aRS := MyReadRow( ::hRes )
       AEVAL( ::aRS, {| xV,nP | ::aRS[nP] := MyClReadCol( ::hRes,nP ) } )
    EndIf
-   If ::nL == 0 .OR. ::aRS[1] # ::aLS[4]
-      aHis := Buscar( "SELECT nroiden, apellidos, nombres FROM historia "+;
-                      "WHERE codigo_nit = " + LTRIM(STR(::aLS[4])),"CM",,8 )
-      If LEN( aHis ) == 0
-         aHis := { "",::aLS[5],"" }
-      EndIf
-      oRpt:Say(++nF, 1, aHis[1] )
-      oRpt:Say(  nF, 2, XTRIM( aHis[2] ) + ALLTRIM( aHis[3] ) )
+   If ::nL == 0 .OR. ::aRS[4] # ::aLS[4]
+      oRpt:Say(++nF, 1, ::aLS[5] )
+      oRpt:Say(  nF, 2, ::aLS[7] )
       FOR nC := 1 TO 6
-       //If aVence[nC] # 0
-            oRpt:Say( nF, nC+2, aVence[nC] )
-         // oRpt:Say( nF, nC+2, aVence[nC],,,,,,,,,,,::aVG[2] )
-       //EndIf
+         oRpt:Say( nF, nC+2, aVence[nC] )
       NEXT nC
       AFILL( aVence,0 )
-      ::aLS[4] := ::aRS[1]
-      ::aLS[5] := ::aRS[2]
+      ::aLS[4] := ::aRS[4]
+      ::aLS[5] := ::aRS[1]
+      ::aLS[7] := If( EMPTY( ::aRS[2] ), ::aRS[3], ::aRS[2] )
    EndIf
 EndDo
    oRpt:Visualizar(.T.)

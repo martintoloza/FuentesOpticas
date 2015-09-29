@@ -720,9 +720,10 @@ METHOD Reposicion( oGet ) CLASS TCompara
 sQry := "SELECT numfac, servic, fecfac, orden, precioven - valor "+;
         "FROM cadtalla "       +;
         "WHERE orden      > 0" +;
+         " AND fecfac    <> ''"+;
          " AND precioven  > 0" +;
          " AND valor      > 0" +;
-         " AND precioven <> valor ORDER BY numfac"
+         " AND precioven <> valor OR clase = 'SP' ORDER BY numfac"
 hRes := If( MSQuery( oApl:oMySql:hConnect,sQry )  ,;
             MSStoreResult( oApl:oMySql:hConnect ), 0 )
 If (nL := MSNumRows( hRes )) == 0
@@ -734,7 +735,9 @@ sCli := "SELECT cliente FROM cadantic "+;
         "WHERE numero = XX"            +;
          " AND optica = " + LTRIM(STR(oApl:nEmpresa))
  aGT := ::BuscaCta( ::aLS[2],If( oApl:nEmpresa == 21, 18, oApl:nEmpresa ),"18" )
- aGT[2,2] := aGT[3,2] := "890112740"
+ aGT[1,07] := oApl:oEmp:PRINCIPAL
+ aGT[1,10] := oApl:oEmp:SUCURSAL
+ aGT[2,02] := aGT[3,2] := "890112740"
 ::aLS[7] := "AO" ; ::aLS[8] := "18" ; ::aLS[9] := .t.
 While nL > 0
    aRes := MyReadRow( hRes )
@@ -749,10 +752,11 @@ While nL > 0
    EndIf
    oGet[7]:SetText( aRes[2] )
       sQry  := Buscar( STRTRAN( sQry,"XX",LTRIM(STR(aRes[1])) ),"CM",,8,,1 )
-   aGT[1,1] := aRes[3]                             //Fecha
-   aGT[1,2] := LTRIM( STR( aRes[1] ) )             //Numfac
+   aGT[1,1] := aRes[3]                           //Fecha
+   aGT[1,2] := LTRIM( STR( aRes[4] ) )           //Orden
    aGT[1,6] := If( EMPTY( sQry ), "VARIOS",;
                    ALLTRIM(STRTRAN( sQry,"'"," " )) )
+   aGT[2,3] := aGT[3,3] := aGT[4,3] := aGT[5,3] := aRes[2]
    If aRes[5] > 0
       aGT[2,7] := aGT[5,7] := aRes[5]
       aGT[3,8] := aGT[4,8] := aRes[5]
@@ -764,7 +768,6 @@ While nL > 0
       aGT[2,7] := aGT[5,7] := aGT[3,8] := aGT[4,8] := 0
    EndIf
    ::BuscaNit( aGT )
-   ::aMV[1,2] := LTRIM( STR( aRes[4] ) )           //Orden
    ::aMV[2,4] := aRes[2]
    //MsgInfo( TRANSFORM( ::aMV[2,7],"99,999,999" ) + CRLF +;
    //         TRANSFORM( ::aMV[2,8],"99,999,999" ),aRes[2] )
@@ -776,7 +779,7 @@ RETURN .f.
 
 //------------------------------------//
 METHOD NCredito( oGet ) CLASS TCompara
-   LOCAL aCT := ARRAY(17)
+   LOCAL aCT := ARRAY(18)
    LOCAL aFac, aRes, hRes, nF, nL, oPC, oRpt
 aCT[1] := oApl:Abrir( "cadtalla","numfac, orden",,.t. )
 aRes := "SELECT c.NUMERO_ORDEN, c.FECHA_DOCUMENTO, r.FACTURA, "+;
@@ -833,11 +836,17 @@ WHERE LEFT(d.codart,2) IN('02', '05')
   AND c.indicador <> 'A'
 GROUP BY FAC
 
-SELECT numfac, orden, clase, fecfac, fecdoc, precioven, valor
+SELECT numfac, orden, clase, fecfac, fecdoc, precioven, valor, servic, cantloc
 FROM cadtalla
-WHERE numfac >= 0
+WHERE clase = 'A' AND orden = 0
 ORDER BY numfac, orden
-aFac := "WHERE d.codart IN('0201', '0202', '0503', '0505', '0599000002')"
+
+SELECT t.consec, SUM(t.precioven) FROM cadtalla t
+WHERE t.clase  = ''
+  AND t.consec IN (SELECT a.numfac FROM cadtalla a
+                   WHERE  a.clase = 'A' AND a.orden = 0)
+GROUP BY t.consec
+ORDER BY t.consec
 */
 aRes := "SELECT c.orden, c.fechoy, c.numfac FAC, SUM(d.cantidad * d.pcosto), "+;
                "c.remplaza, 'A', c.factexce, SUM(d.precioven), c.codigo_nit " +;
@@ -989,9 +998,9 @@ MSFreeResult( hRes )
 oRpt := TDosPrint()
 oRpt:New( oApl:cPuerto,oApl:cImpres,{"COMPARACION COSTOS ORDENES DE TALLA" ,;
           "DESDE " + NtChr(::aLS[2],"2") + " HASTA " + NtChr(::aLS[3],"2" ),;
-          "FACTURA  NRO.ORDEN  FEC.OPTICA  FEC.LABORA.     COSTO OPT.  COSTO LOC."},::aLS[9] )
-aRes := "SELECT numfac, orden, clase, fecfac, fecdoc, precioven, "+;
-               "valor, ppubli, desmon, servic, cantloc "          +;
+          "FACTURA  NRO.ORDEN  FEC.OPTICA  FEC.LABORA.     COSTO LOC.  COSTO OPT."},::aLS[9] )
+aRes := "SELECT numfac, orden, clase, fecfac, fecdoc, valor, "+;
+               "precioven, ppubli, desmon, servic, cantloc "  +;
         "FROM cadtalla WHERE numfac >= 0 ORDER BY numfac, orden"
 oPC  := "SELECT SUM(precioven) FROM cadtalla WHERE consec = [FAC] AND clase = ''"
 hRes := If( MSQuery( oApl:oMySql:hConnect,aRes ) ,;
@@ -1007,34 +1016,33 @@ While nL > 0
    ::aLS[9] := .t.
    If aRes[3] == "A " .AND. aRes[2] == 0
       nF := Buscar( STRTRAN( oPC,"[FAC]",LTRIM(STR(aRes[1])) ),"CM",,8,,4 )
-      If aRes[6] == nF
+      If aRes[7] == nF
          ::aLS[9]:= .f.
-         aCT[09] += aRes[6]
-      ElseIf nF # 0 .AND. aRes[6] # nF
+         aCT[09] += aRes[7]
+      ElseIf nF # 0 .AND. aRes[7] # nF
          aRes[3] := "*"
-         aRes[7] := nF
+         aRes[6] := nF
       EndIf
    EndIf
    If ::aLS[9] .AND. aRes[6] + aRes[7] # 0
       If aRes[3] == "S "
          aRes[5] := " SIN ORDEN"
          aCT[03] += 2
-         aCT[11] += aRes[6]
-        // MsgInfo( aRes[1],aRes[5] )
+         aCT[11] += aRes[7]
       Else
-         aCT[03] += (aRes[6] - aRes[7])
+         aCT[03] += (aRes[7] - aRes[6])
       EndIf
       AADD( aFac,aRes )
-      nF := If( aRes[3] == "A " .OR. aRes[3] == "* ", 9, 7 )
-      aCT[nF] += aRes[6]
-      aCT[08] += If( aRes[3] == "*", 0, aRes[7] )
+      nF := If( aRes[3] == "A " .OR. aRes[3] == "*", 9, 8 )
+      aCT[nF] += aRes[7]
+      aCT[07] += If( aRes[3] == "*", 0, aRes[6] )
       aCT[10] += aRes[9]
       If aRes[10] >= 1
          nF := INT(aRes[10]) + 11
-         aCT[nF] += aRes[6]
+         aCT[nF] += aRes[7]
       EndIf
       If aRes[11] >= 1
-         aCT[16] += aRes[6]
+         aCT[15] += aRes[6]
          aCT[17] += aRes[7]
       EndIf
    EndIf
@@ -1048,14 +1056,25 @@ While nL > 0
          aCT[6] ++
          FOR nF := 1 TO LEN( aFac )
             aCT[4] := aFac[nF,6] - aFac[nF,7]
-            If aFac[nF,2] > 0 .AND. aFac[nF,6] > 0 .AND. aFac[nF,7] > 0
-               aCT[15] += aCT[4]
+            aFac[nF,8] := If( !EMPTY(aFac[nF,4]) .AND. aFac[nF,8] == 0, "SP", "" )
+            If aFac[nF,2] > 0
+               If aFac[nF,6] > 0 .AND. aFac[nF,7] > 0 .OR. aFac[nF,8] == "SP"
+                  If aCT[4] < 0
+                     aCT[16] += (aCT[4] * -1)
+                  Else
+                     aCT[18] +=  aCT[4]
+                  EndIf
+               EndIf
+               If aFac[nF,8] == "SP"
+                  Guardar( "UPDATE cadtalla SET clase = 'SP' WHERE numfac = "+;
+                           LTRIM(STR(aFac[nF,1])),"cadtalla" )
+               EndIf
             EndIf
             oRpt:Say( oRpt:nL,00,STR(aFac[nF,1],7) + STR(aFac[nF,2],10) )
             oRpt:Say( oRpt:nL,18,aFac[nF,3] )
             oRpt:Say( oRpt:nL,20,aFac[nF,4] )
             oRpt:Say( oRpt:nL,32,aFac[nF,5] )
-            oRpt:Say( oRpt:nL,45,If( !EMPTY(aFac[nF,4]) .AND. aFac[nF,8] == 0, "SP", "" ) )
+            oRpt:Say( oRpt:nL,45,aFac[nF,8] )
             oRpt:Say( oRpt:nL,48,TRANSFORM(aFac[nF,6],"99,999,999") )
             oRpt:Say( oRpt:nL,60,TRANSFORM(aFac[nF,7],"99,999,999") )
             oRpt:Say( oRpt:nL,71,If( aFac[nF,9] > 0, "D", "" ) )
@@ -1072,25 +1091,28 @@ EndDo
 MSFreeResult( hRes )
  aRes := { "ANTICIPOS FACTURADOS","DESCUENTOS LOC"      ,"SIN ORDEN EN OPTICA",;
            "GARANTIAS O REGALOS" ,"FACTURADOS EN EL MES","SIN FACTURAR"       ,;
-           "VALOR PARA AJUSTAR"  ,"MES DIFERENTE EN LOC" }
- aCT[7] -= aCT[11]
- aCT[8] -= aCT[17]
- aCT[3] := aCT[07] - aCT[8]
- aCT[4] := aCT[15] - aCT[3]
+           "MES DIFERENTE EN LOC","VALOR PARA AJUSTAR" }
+ aCT[7] -= aCT[15]
+ aCT[8] -= aCT[11]
+ aCT[2] := aCT[07] - aCT[8]
+ aCT[3] := aCT[15] - aCT[17]
+ aCT[4] := aCT[16] - aCT[18] - aCT[2]
  oRpt:Say(  oRpt:nL,00,REPLICATE( "-",83 ),,,1 )
  oRpt:Separator( 1,8 )
  oRpt:Say(  oRpt:nL,20,TRANSFORM(aCT[05],"999,999") )
  oRpt:Say(  oRpt:nL,32,TRANSFORM(aCT[06],"999,999") )
  oRpt:Say(  oRpt:nL,47,TRANSFORM(aCT[07],"999,999,999") )
  oRpt:Say(  oRpt:nL,59,TRANSFORM(aCT[08],"999,999,999") )
- oRpt:Say(  oRpt:nL,71,TRANSFORM(aCT[03],"999,999,999") )
+ oRpt:Say(  oRpt:nL,71,TRANSFORM(aCT[02],"999,999,999") )
 FOR nF := 1 TO 8
    oRpt:Say(++oRpt:nL,23,aRes[nF] )
    oRpt:Say(  oRpt:nL,47,TRANSFORM(aCT[nF+8],"999,999,999") )
 NEXT nF
  nF := oRpt:nL -1
- oRpt:Say(  nF     ,71,TRANSFORM(aCT[04],"999,999,999") )
- oRpt:Say(  oRpt:nL,59,TRANSFORM(aCT[17],"999,999,999") )
+ oRpt:Say(  nF     ,59,TRANSFORM(aCT[17],"999,999,999") )
+ oRpt:Say(  nF     ,71,TRANSFORM(aCT[03],"999,999,999") )
+ oRpt:Say(  oRpt:nL,59,TRANSFORM(aCT[18],"999,999,999") )
+ oRpt:Say(  oRpt:nL,71,TRANSFORM(aCT[04],"999,999,999") )
  oRpt:NewPage()
  oRpt:End()
 If ::aLS[10] .AND. ::aLS[2] >= CTOD("01.07.2015")

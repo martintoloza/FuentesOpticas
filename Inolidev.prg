@@ -147,7 +147,7 @@ While nL > 0
       oRpt:Say( oRpt:nL,85,TRANSFORM(aRes[9],"999,999,999") )
       oRpt:Say( oRpt:nL,98,aTD[ aRes[8] ] + " " + cOpt )
       oRpt:nL++
-      nG := { 1,1,2,3,4,5,5,6 }[ aRes[8] ] +;
+      nG := { 1,1,2,3,4,5,5,6,7 }[ aRes[8] ] +;
              If( cQry == "1" .AND. aRes[12] == "C", 6,;
              If( cQry == "1" .AND. aRes[13], 12, 0 ))
       cOpt := cQry+STR(nG,2)

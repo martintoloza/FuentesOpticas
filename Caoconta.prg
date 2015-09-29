@@ -279,7 +279,8 @@ Else
    aVT := { .035,aRes[1],aRes[2],aRes[3],aRes[5],aRes[6],INT(aRes[7]),;
             aRes[13],aRes[14],aRes[15],.f. }
 EndIf
-   aGT := ::BuscaCta( aRes[2],If( oApl:nEmpresa == 21, 18, oApl:nEmpresa ),"3" )
+   nE  := If( oApl:nEmpresa == 21 .AND. ::aLS[2] <= CTOD("31.08.2015"), 18, oApl:nEmpresa )
+   aGT := ::BuscaCta( aRes[2],nE,"3" )
 /*
 If ::aLS[2] >= CTOD("01.08.2014")
    aGT[2,1] := "13050515"

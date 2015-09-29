@@ -312,13 +312,17 @@ If lExiste
       ElseIf ::SiNo( lOk )
          cMens := {"Activa","Vendida","Devuelta"}[AT(oApl:oInv:SITUACION,"EVD")] +;
                    " en " + ArrayValor( oApl:aOptic,STR(oApl:oInv:OPTICA,2) )
-//       If oApl:lEnLinea .AND. !(::oDvd:CAUSADEV == 6 .AND. oApl:oInv:SITUACION == "V" .AND. lOk)
          If oApl:lEnLinea .AND. !(::aCau[::oDvd:CAUSADEV,2] == 7 .AND. oApl:oInv:SITUACION == "V" .AND. lOk)
             MsgStop( cMens,"Montura esta" )
             lExiste := .f.
          Else
             lExiste := MsgNoYes( cMens,"Montura esta" )
          EndIf
+      EndIf
+   ElseIf ::oDvd:CAUSADEV == 9
+      If LEFT(::oDvd:CODIGO,1) #  "6"
+         MsgStop( "Solo se usa en Lentes de Contacto",">>> PRUEBA L.C. <<<" )
+         lExiste := .f.
       EndIf
    EndIf
 Else
