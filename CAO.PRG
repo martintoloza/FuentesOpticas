@@ -212,7 +212,7 @@ If !::lSalir
       ::lSalir := .t.
       RETURN NIL
    EndIf
-   If oApl:dFec >= CTOD("31.12.2015") + ::oEmp:DIAS
+   If oApl:dFec >= CTOD("31.07.2016") + ::oEmp:DIAS
       MsgStop( "ESTO ERA UN PROGRAMA DE DEMOSTRACION" + CRLF +;
                "POR FAVOR CONTACTE A SU PROPIETARIO " + CRLF +;
                "PARA OBTENER LA LICENCIA............" )

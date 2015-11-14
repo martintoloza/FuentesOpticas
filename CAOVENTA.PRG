@@ -619,10 +619,11 @@ METHOD BuscaFac( nFac,dFec,nCol ) CLASS TFactura
    LOCAL aFac, cQry, lOK := .t.
 If VALTYPE( dFec ) == "D"
    If nFac > 0
-      cQry := "SELECT codigo_cli, codigo_nit FROM cadfactu "+;
-              "WHERE optica = " + LTRIM(STR(oApl:nEmpresa)) +;
-               " AND numfac = " + LTRIM(STR(nFac))          +;
-               " AND fechoy >= "+ xValToChar( dFec-15 )
+      cQry := "SELECT codigo_cli, codigo_nit FROM cadfactu "      +;
+              "WHERE optica     = " + LTRIM(STR(oApl:nEmpresa))   +;
+               " AND numfac     = " + LTRIM(STR(nFac))            +;
+               " AND codigo_cli = " + LTRIM(STR(::oDb:CODIGO_CLI))+;
+               " AND fechoy    >= "+ xValToChar( dFec-15 )
       aFac := Buscar( cQry,"CM",,8 )
       If LEN( aFac ) == 0
          cQry := STRTRAN( cQry,"factu","antic" )

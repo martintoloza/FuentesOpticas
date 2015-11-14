@@ -1096,7 +1096,7 @@ MSFreeResult( hRes )
  aCT[8] -= aCT[11]
  aCT[2] := aCT[07] - aCT[8]
  aCT[3] := aCT[15] - aCT[17]
- aCT[4] := aCT[16] - aCT[18] - aCT[2]
+ aCT[4] := aCT[02] + aCT[16] - aCT[18]
  oRpt:Say(  oRpt:nL,00,REPLICATE( "-",83 ),,,1 )
  oRpt:Separator( 1,8 )
  oRpt:Say(  oRpt:nL,20,TRANSFORM(aCT[05],"999,999") )

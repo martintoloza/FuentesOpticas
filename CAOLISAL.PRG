@@ -65,6 +65,8 @@ CLASS TCartera FROM TIMPRIME
  METHOD Excel_Var()
  METHOD SuperSalud()
  METHOD ListoCan()
+ METHOD LaserCan( aGT )
+ METHOD Resumen( aGT,nK )
 ENDCLASS
 
 //------------------------------------//
@@ -694,27 +696,55 @@ METHOD ListoCan() CLASS TCartera
    LOCAL cQry, nK, oRpt 
    LOCAL aGT := { 0,0,0,0,0,0,0,0,0,0,NtChr( LEFT( DTOS( ::aLS[1] ),6 ),"F" ),;
                   " = " + LTRIM(STR(oApl:nEmpresa)) }
-oRpt := TDosPrint()
-oRpt:New( oApl:cPuerto,oApl:cImpres,{"REPORTE DE FACTURAS CANCELADAS" ,;
-         "EN " + NtChr( ::aLS[1],"6" ),SPACE(10) + "--FACTURA-   FECHA " +;
-         "CANCELACION      VALOR FACTURA   LENTE CONTACTO"},::aLS[3],::aLS[2],1 )
+ ::aEnc := { .t., oApl:cEmpresa, oApl:oEmp:Nit      ,;
+             "REPORTE DE FACTURAS CANCELADAS","EN "+NtChr( ::aLS[1],"6" ),;
+             { .F., 0.5,"" }         , { .T.,11.2,"FACTURA" }       ,;
+             { .T.,13.5,"CANCELADA" }, { .T.,17.0,"VALOR FACTURA" } ,;
+             { .T.,20.5,"LENTE CONTACTO" } }
 If ::aLS[6]
    ::aLS[7] := "S"
    ::aRS    := Privileg( {"principal",oApl:oEmp:PRINCIPAL,"optica <> ",1},.t.,.f. )
     aGT[12] := ::aRS[1]
-   oRpt:aEnc[3] := STUFF( oRpt:aEnc[3],1,LEN( ::aRS[2] ),::aRS[2] )
+   ::aEnc[6,3] := ::aRS[2]
 EndIf
 cQry := "SELECT f.numfac, f.fechacan, f.totalfac, n.grupo"+;
              ", n.codigo, n.nombre, f.optica, f.autoriza "+;
-        "FROM cadclien n, cadfactu f "                   +;
-        "WHERE f.codigo_nit = n.codigo_nit"              +;
-         " AND f.optica "      + aGT[12]                 +;
-         " AND f.fechacan >= " + xValToChar( aGT[11] )   +;
-         " AND f.fechacan <= " + xValToChar( ::aLS[1] )  +;
-         " AND f.tipo      = " + xValToChar( oApl:Tipo ) +;
-         " AND f.indicador = 'C'"      + If( ::aLS[4] > 0,;
+             ", SUM(d.precioven + d.montoiva) "           +;
+        "FROM cadfactu f LEFT JOIN cadclien n "           +;
+         "USING( codigo_nit )"                            +;
+                        "LEFT JOIN cadventa d "           +;
+          "ON (f.optica     = d.optica"                   +;
+         " AND f.numfac     = d.numfac"                   +;
+         " AND f.tipo       = d.tipo"                     +;
+         " AND d.indicador NOT IN('A','D')"               +;
+         " AND LEFT(d.codart,2) >= '60')"                 +;
+        "WHERE f.optica "      + aGT[12]                  +;
+         " AND f.fechacan  >= " + xValToChar( aGT[11] )   +;
+         " AND f.fechacan  <= " + xValToChar( ::aLS[1] )  +;
+         " AND f.tipo       = " + xValToChar( oApl:Tipo ) +;
+         " AND f.indicador  = 'C'"      + If( ::aLS[4] > 0,;
          " AND f.codigo_nit = "+ LTRIM(STR(oApl:oNit:CODIGO_NIT)), "" )+;
-         " ORDER BY n.nombre, f.numfac"
+         " GROUP BY f.numfac ORDER BY n.nombre, f.numfac"
+/*
+SELECT f.numfac, f.fechacan, f.totalfac, n.grupo
+     , n.codigo, n.nombre, f.optica, f.autoriza
+     , SUM(d.precioven + d.montoiva)
+FROM cadfactu f LEFT JOIN cadclien n
+ USING( codigo_nit )
+                LEFT JOIN cadventa d
+  ON (f.optica     = d.optica
+  AND f.numfac     = d.numfac
+  AND f.tipo       = d.tipo
+  AND d.indicador NOT IN('A','D')
+  AND LEFT(d.codart,2) >= '60')
+WHERE f.optica     = 44
+  AND f.fechacan  >= '2015-09-01'
+  AND f.fechacan  <= '2015-09-30'
+  AND f.tipo       = 'U'
+  AND f.indicador  = 'C'
+GROUP BY f.numfac
+ORDER BY n.nombre, f.numfac
+*/
 ::hRes := If( MSQuery( oApl:oMySql:hConnect,cQry ) ,;
               MSStoreResult( oApl:oMySql:hConnect ), 0 )
 If (::nL := MSNumRows( ::hRes )) > 0
@@ -723,14 +753,18 @@ If (::nL := MSNumRows( ::hRes )) > 0
    aGT[1] := ::nL
    ::aLS[5]:= ::aRS[6]
 EndIf
+If ::aLS[8] == 2
+   ::LaserCan( aGT )
+   RETURN NIL
+EndIf
+oRpt := TDosPrint()
+oRpt:New( oApl:cPuerto,oApl:cImpres,{ ::aEnc[4], ::aEnc[5]  ,;
+          SPACE(10) + "--FACTURA-   FECHA CANCELACION      "+;
+          "VALOR FACTURA   LENTE CONTACTO"},::aLS[3],::aLS[2],1 )
+If !EMPTY( ::aEnc[6,3] )
+   oRpt:aEnc[3] := STUFF( oRpt:aEnc[3],1,LEN( ::aEnc[6,3] ),::aEnc[6,3] )
+EndIf
 While ::nL > 0
-   cQry := "SELECT SUM(precioven + montoiva) FROM cadventa "+;
-           "WHERE optica = " + LTRIM( STR(::aRS[7]) )  +;
-            " AND numfac = " + LTRIM( STR(::aRS[1]) )  +;
-            " AND tipo   = " + xValToChar( oApl:Tipo ) +;
-            " AND indicador NOT IN('A','D')"           +;
-            " AND LEFT(codart,2) >= '60'"
-   aGT[4] := Buscar( cQry,"CM",,8 )
       oRpt:Titulo( 76 )
    If oRpt:nPage >= oRpt:nPagI .AND. ::aLS[7] == "N"
       If aGT[9] == 0
@@ -739,13 +773,13 @@ While ::nL > 0
       oRpt:Say( oRpt:nL,10,STR(::aRS[1]) )
       oRpt:Say( oRpt:nL,27,NtChr( ::aRS[2],"2" ) )
       oRpt:Say( oRpt:nL,45,TRANSFORM(::aRS[3],   "999,999,999.99") )
-      oRpt:Say( oRpt:nL,62,TRANSFORM(aGT[4],"@Z 999,999,999.99") )
+      oRpt:Say( oRpt:nL,62,TRANSFORM(::aRS[9],"@Z 999,999,999.99") )
       oRpt:nL++
    EndIf
    nK := If( ::aRS[4] .OR. ::aRS[8] == "GRUPO     ", 5, If( ::aRS[5] > 0, 8, 7 ) )
    aGT[02] += ::aRS[3]
-   aGT[03] += aGT[4]
-   aGT[06] += If( ::aRS[4], aGT[4], 0 )
+   aGT[03] += ::aRS[9]
+   aGT[06] += If( ::aRS[4], ::aRS[9], 0 )
    aGT[09] += ::aRS[3]
    aGT[nK] += ::aRS[3]
    If ::aRS[8] == "FOCA      "
@@ -776,16 +810,7 @@ MSFreeResult( ::hRes )
              "TOTAL EMPRESAS ------------> $","PAGOS POR NOTA CREDITO ----> $",;
              "TOTAL PUNTO EN FOCA -------> $","9,999,999,999.99" }
 If aGT[1] > 0
-   cQry := "SELECT SUM(pagado) FROM cadfactu u, cadpagos p "+;
-           "WHERE u.indicador <> 'N'"                   +;
-            " AND p.optica = u.optica"                  +;
-            " AND p.numfac = u.numfac"                  +;
-            " AND p.tipo   = u.tipo"                    +;
-            " AND p.optica  "   + aGT[12]               +;
-            " AND p.fecpag >= " + xValToChar( aGT[11] ) +;
-            " AND p.fecpag <= " + xValToChar( ::aLS[1] )+;
-            " AND p.formapago IN(7,9)"
-   aGT[9] := Buscar( cQry,"CM",,8 )
+   aGT := ::Resumen( aGT,1 )
    oRpt:Say(  oRpt:nL,01,Replicate("_",75),,,1 )
    oRpt:Separator( 0,19 )
    oRpt:Say(++oRpt:nL,02,STR(aGT[1])+" TOTAL FACTURAS CANCELADAS :" )
@@ -809,61 +834,30 @@ If aGT[1] > 0
    oRpt:nL += 6
 EndIf
 
-cQry := "SELECT n.grupo, n.codigo, f.totalfac, f.totaliva, f.autoriza "+;
-        "FROM cadclien n, cadfactu f "                  +;
-        "WHERE f.codigo_nit = n.codigo_nit"             +;
-         " AND f.optica "      + aGT[12]                +;
-         " AND f.fechoy   >= " + xValToChar( aGT[11] )  +;
-         " AND f.fechoy   <= " + xValToChar( ::aLS[1] ) +;
-         " AND f.tipo      = " + xValToChar( oApl:Tipo )+;
-         " AND f.indicador <> 'A'" 
-::hRes := If( MSQuery( oApl:oMySql:hConnect,cQry ) ,;
-              MSStoreResult( oApl:oMySql:hConnect ), 0 )
-::nL   := MSNumRows( ::hRes )
-  cQry := DsctoDevol( {aGT[12],aGT[11],::aLS[1]} )
-AFILL( aGT,0 )
-While ::nL > 0
-   ::aRS := MyReadRow( ::hRes )
-   AEVAL( ::aRS, { | xV,nP | ::aRS[nP] := MyClReadCol( ::hRes,nP ) } )
-   ::aRS[3] -= ::aRS[4] 
-   nK := If( ::aRS[1],     1,;
-         If( ::aRS[5] == "GRUPO     ", 4,;
-         If( ::aRS[2] > 0, 3, 2 ) ) )
-   If ::aRS[5] == "FOCA      "
-      nK := 5
-   EndIf
-      aGT[nK]   += ::aRS[3]
-      aGT[nK+5] += ::aRS[4] 
-   ::nL --
-EndDo
-MSFreeResult( ::hRes )
- aGT[1] -= cQry[2]
- aGT[2] -= cQry[1]
- aGT[3] -= cQry[3]
- aGT[5] -= cQry[4]
- aGT[11] := aGT[2] + aGT[3] + aGT[4]
+aGT := ::Resumen( aGT,2 )
+
  oRpt:Say(  oRpt:nL,27,"R E S U M E N  D E  V E N T A S  S I N   I.V.A." )
  oRpt:Say(++oRpt:nL,27,"DSCTO. POR N.C." )
  oRpt:Say(++oRpt:nL,00,SUBSTR(::aVG[1],7) )
- oRpt:Say(  oRpt:nL,26,TRANSFORM(cQry[2],::aVG[6] ) )
- oRpt:Say(  oRpt:nL,43,TRANSFORM( aGT[1],::aVG[6] ) )
- oRpt:Say(  oRpt:nL,60,TRANSFORM( aGT[6],::aVG[6]) )
+ oRpt:Say(  oRpt:nL,26,TRANSFORM(::aGT[2],::aVG[6] ) )
+ oRpt:Say(  oRpt:nL,43,TRANSFORM(  aGT[1],::aVG[6] ) )
+ oRpt:Say(  oRpt:nL,60,TRANSFORM(  aGT[6],::aVG[6]) )
  oRpt:Say(++oRpt:nL,00,"EMPRESAS GRUPO.P ----> $" )
  oRpt:Say(  oRpt:nL,43,TRANSFORM(aGT[4],::aVG[6]) )
  oRpt:Say(  oRpt:nL,60,TRANSFORM(aGT[9],::aVG[6]) )
  oRpt:Say(++oRpt:nL,00,SUBSTR(::aVG[2],7) )
- oRpt:Say(  oRpt:nL,26,TRANSFORM(cQry[1],::aVG[6] ) )
- oRpt:Say(  oRpt:nL,43,TRANSFORM( aGT[2],::aVG[6] ) )
- oRpt:Say(  oRpt:nL,60,TRANSFORM( aGT[7],::aVG[6]) )
+ oRpt:Say(  oRpt:nL,26,TRANSFORM(::aGT[1],::aVG[6] ) )
+ oRpt:Say(  oRpt:nL,43,TRANSFORM(  aGT[2],::aVG[6] ) )
+ oRpt:Say(  oRpt:nL,60,TRANSFORM(  aGT[7],::aVG[6]) )
  oRpt:Say(++oRpt:nL,00,SUBSTR(::aVG[3],7) )
- oRpt:Say(  oRpt:nL,26,TRANSFORM(cQry[3],::aVG[6] ) )
- oRpt:Say(  oRpt:nL,43,TRANSFORM( aGT[3],::aVG[6] ) )
- oRpt:Say(  oRpt:nL,60,TRANSFORM( aGT[8],::aVG[6]) )
+ oRpt:Say(  oRpt:nL,26,TRANSFORM(::aGT[3],::aVG[6] ) )
+ oRpt:Say(  oRpt:nL,43,TRANSFORM(  aGT[3],::aVG[6] ) )
+ oRpt:Say(  oRpt:nL,60,TRANSFORM(  aGT[8],::aVG[6]) )
  If aGT[5] # 0
     oRpt:Say(++oRpt:nL,00,SUBSTR(::aVG[5],7) )
-    oRpt:Say(  oRpt:nL,26,TRANSFORM(cQry[4],::aVG[6] ) )
-    oRpt:Say(  oRpt:nL,43,TRANSFORM( aGT[5],::aVG[6] ) )
-    oRpt:Say(  oRpt:nL,60,TRANSFORM(aGT[10],::aVG[6]) )
+    oRpt:Say(  oRpt:nL,26,TRANSFORM(::aGT[4],::aVG[6] ) )
+    oRpt:Say(  oRpt:nL,43,TRANSFORM(  aGT[5],::aVG[6] ) )
+    oRpt:Say(  oRpt:nL,60,TRANSFORM( aGT[10],::aVG[6]) )
  EndIf
  oRpt:Say(++oRpt:nL,45,"==============" )
  oRpt:Say(++oRpt:nL,13,"TOTAL VENTAS NETAS :" )
@@ -871,6 +865,183 @@ MSFreeResult( ::hRes )
  oRpt:NewPage()
  oRpt:End()
 RETURN NIL
+
+//------------------------------------//
+METHOD LaserCan( aGT ) CLASS TCartera
+   LOCAL cQry, nK
+ ::Init( ::aEnc[4], .f. ,, !::aLS[3] ,,, ::aLS[3] )
+ ::nMD := 20.5
+ PAGE
+While ::nL > 0
+   If ::aLS[7] == "N"
+      ::Cabecera( .t.,0.42 )
+      If aGT[9] == 0
+         UTILPRN ::oUtil Self:nLinea, 0.5 SAY ::aLS[5]
+      EndIf
+      UTILPRN ::oUtil Self:nLinea,11.2 SAY   STR( ::aRS[1] )                       RIGHT
+      UTILPRN ::oUtil Self:nLinea,11.5 SAY NtChr( ::aRS[2],"2" )
+      UTILPRN ::oUtil Self:nLinea,17.0 SAY TRANSFORM(::aRS[3],   "999,999,999.99") RIGHT
+      UTILPRN ::oUtil Self:nLinea,20.5 SAY TRANSFORM(::aRS[9],"@Z 999,999,999.99") RIGHT
+   EndIf
+   nK := If( ::aRS[4] .OR. ::aRS[8] == "GRUPO     ", 5, If( ::aRS[5] > 0, 8, 7 ) )
+   aGT[02] += ::aRS[3]
+   aGT[03] += ::aRS[9]
+   aGT[06] += If( ::aRS[4], ::aRS[9], 0 )
+   aGT[09] += ::aRS[3]
+   aGT[nK] += ::aRS[3]
+   If ::aRS[8] == "FOCA      "
+      aGT[10] += ::aRS[3]
+   EndIf
+   If (::nL --) > 1
+      ::aRS := MyReadRow( ::hRes )
+      AEVAL( ::aRS, {| xV,nP | ::aRS[nP] := MyClReadCol( ::hRes,nP ) } )
+   EndIf
+   If ::nL == 0 .OR. ::aRS[6] # ::aLS[5]
+      If ::aLS[7] == "N"
+         ::Cabecera( .t.,0.84 )
+         UTILPRN ::oUtil SELECT ::aFnt[1]
+         UTILPRN ::oUtil Self:nLinea,10.0 SAY "TOTAL CLIENTE --> $"
+         UTILPRN ::oUtil Self:nLinea,17.0 SAY TRANSFORM( aGT[9],"999,999,999.99" ) RIGHT
+         UTILPRN ::oUtil SELECT ::aFnt[2]
+      Else
+         ::Cabecera( .t.,0.42 )
+         UTILPRN ::oUtil Self:nLinea, 0.5 SAY ::aLS[5]
+         UTILPRN ::oUtil Self:nLinea,17.0 SAY TRANSFORM( aGT[9],"999,999,999.99" ) RIGHT
+      EndIF
+      ::nLinea += 0.42
+      ::aLS[5] := ::aRS[6]
+      aGT[9]   := 0
+   EndIf
+EndDo
+MSFreeResult( ::hRes )
+  ::aVG := { "TOTAL OPTICAS DEL GRUPO ---> $","TOTAL CLIENTES VARIOS -----> $",;
+             "TOTAL EMPRESAS ------------> $","PAGOS POR NOTA CREDITO ----> $",;
+             "TOTAL PUNTO EN FOCA -------> $","9,999,999,999.99" }
+If aGT[1] > 0
+   aGT := ::Resumen( aGT,1 )
+   ::Cabecera( .t.,0.42,6.72,20.5 )
+      UTILPRN ::oUtil Self:nLinea, 1.6 SAY STR( aGT[1],4 ) + " TOTAL FACTURAS CANCELADAS :"
+      UTILPRN ::oUtil Self:nLinea,17.0 SAY TRANSFORM( aGT[02],::aVG[6] ) RIGHT
+      UTILPRN ::oUtil Self:nLinea,20.5 SAY TRANSFORM( aGT[03],::aVG[6] ) RIGHT
+      ::nLinea += 0.42
+      UTILPRN ::oUtil Self:nLinea, 4.0 SAY ::aVG[1]
+      UTILPRN ::oUtil Self:nLinea,17.0 SAY TRANSFORM( aGT[05],::aVG[6] ) RIGHT
+      UTILPRN ::oUtil Self:nLinea,20.5 SAY TRANSFORM( aGT[06],::aVG[6] ) RIGHT
+      ::nLinea += 0.42
+   If aGT[09] > 0
+      aGT[02] -= aGT[09]
+      UTILPRN ::oUtil Self:nLinea, 4.0 SAY ::aVG[4]
+      UTILPRN ::oUtil Self:nLinea,17.0 SAY TRANSFORM( aGT[09],::aVG[6] ) RIGHT
+      ::nLinea += 0.42
+   EndIf
+   If aGT[10] > 0
+      aGT[02] -= aGT[10]
+      UTILPRN ::oUtil Self:nLinea, 4.0 SAY ::aVG[5]
+      UTILPRN ::oUtil Self:nLinea,17.0 SAY TRANSFORM( aGT[10],::aVG[6] ) RIGHT
+      ::nLinea += 0.42
+   EndIf
+      UTILPRN ::oUtil Self:nLinea,17.0 SAY "==============" RIGHT
+      UTILPRN ::oUtil Self:nLinea,20.5 SAY "==============" RIGHT
+      ::nLinea += 0.42
+      UTILPRN ::oUtil Self:nLinea,17.0 SAY TRANSFORM(aGT[2]-aGT[5],::aVG[6] ) RIGHT
+      UTILPRN ::oUtil Self:nLinea,20.5 SAY TRANSFORM(aGT[3]-aGT[6],::aVG[6] ) RIGHT
+      ::nLinea += 0.84
+      UTILPRN ::oUtil Self:nLinea, 4.0 SAY ::aVG[2]
+      UTILPRN ::oUtil Self:nLinea,17.0 SAY TRANSFORM( aGT[07],::aVG[6] ) RIGHT
+      ::nLinea += 0.42
+      UTILPRN ::oUtil Self:nLinea, 4.0 SAY ::aVG[3]
+      UTILPRN ::oUtil Self:nLinea,17.0 SAY TRANSFORM( aGT[08],::aVG[6] ) RIGHT
+      ::nLinea += 0.84
+EndIf
+aGT := ::Resumen( aGT,2 )
+      UTILPRN ::oUtil Self:nLinea,10.4 SAY "R E S U M E N  D E  V E N T A S  S I N   I.V.A."
+      ::nLinea += 0.42
+      UTILPRN ::oUtil Self:nLinea,10.4 SAY "DSCTO. POR N.C."
+      ::nLinea += 0.42
+      UTILPRN ::oUtil Self:nLinea, 4.0 SAY ::aVG[1]
+      UTILPRN ::oUtil Self:nLinea,13.5 SAY TRANSFORM(::aGT[2],::aVG[6] ) RIGHT
+      UTILPRN ::oUtil Self:nLinea,17.0 SAY TRANSFORM(  aGT[1],::aVG[6] ) RIGHT
+      UTILPRN ::oUtil Self:nLinea,20.5 SAY TRANSFORM(  aGT[6],::aVG[6] ) RIGHT
+      ::nLinea += 0.42
+      UTILPRN ::oUtil Self:nLinea, 4.0 SAY "EMPRESAS GRUPO.P ----------> $"
+      UTILPRN ::oUtil Self:nLinea,17.0 SAY TRANSFORM(  aGT[4],::aVG[6] ) RIGHT
+      UTILPRN ::oUtil Self:nLinea,20.5 SAY TRANSFORM(  aGT[9],::aVG[6] ) RIGHT
+      ::nLinea += 0.42
+      UTILPRN ::oUtil Self:nLinea, 4.0 SAY ::aVG[2]
+      UTILPRN ::oUtil Self:nLinea,13.5 SAY TRANSFORM(::aGT[1],::aVG[6] ) RIGHT
+      UTILPRN ::oUtil Self:nLinea,17.0 SAY TRANSFORM(  aGT[2],::aVG[6] ) RIGHT
+      UTILPRN ::oUtil Self:nLinea,20.5 SAY TRANSFORM(  aGT[7],::aVG[6] ) RIGHT
+      ::nLinea += 0.42
+      UTILPRN ::oUtil Self:nLinea, 4.0 SAY ::aVG[3]
+      UTILPRN ::oUtil Self:nLinea,13.5 SAY TRANSFORM(::aGT[3],::aVG[6] ) RIGHT
+      UTILPRN ::oUtil Self:nLinea,17.0 SAY TRANSFORM(  aGT[3],::aVG[6] ) RIGHT
+      UTILPRN ::oUtil Self:nLinea,20.5 SAY TRANSFORM(  aGT[8],::aVG[6] ) RIGHT
+      ::nLinea += 0.42
+   If aGT[5] # 0
+      UTILPRN ::oUtil Self:nLinea, 4.0 SAY SUBSTR(::aVG[5],7)
+      UTILPRN ::oUtil Self:nLinea,13.5 SAY TRANSFORM(::aGT[4],::aVG[6] ) RIGHT
+      UTILPRN ::oUtil Self:nLinea,17.0 SAY TRANSFORM(  aGT[5],::aVG[6] ) RIGHT
+      UTILPRN ::oUtil Self:nLinea,20.5 SAY TRANSFORM( aGT[10],::aVG[6] ) RIGHT
+      ::nLinea += 0.42
+   EndIf
+      UTILPRN ::oUtil Self:nLinea,17.0 SAY "==============" RIGHT
+      ::nLinea += 0.42
+      UTILPRN ::oUtil Self:nLinea, 7.5 SAY "TOTAL VENTAS NETAS :"
+      UTILPRN ::oUtil Self:nLinea,17.0 SAY TRANSFORM( aGT[11],::aVG[6] ) RIGHT
+   ENDPAGE
+IMPRIME END .F.
+RETURN NIL
+
+//------------------------------------//
+METHOD Resumen( aGT,nK ) CLASS TCartera
+   LOCAL cQry
+If nK == 1
+   cQry := "SELECT SUM(pagado) FROM cadfactu u, cadpagos p "+;
+           "WHERE u.indicador <> 'N'"                   +;
+            " AND p.optica = u.optica"                  +;
+            " AND p.numfac = u.numfac"                  +;
+            " AND p.tipo   = u.tipo"                    +;
+            " AND p.optica  "   + aGT[12]               +;
+            " AND p.fecpag >= " + xValToChar( aGT[11] ) +;
+            " AND p.fecpag <= " + xValToChar( ::aLS[1] )+;
+            " AND p.formapago IN(7,9)"
+   aGT[9] := Buscar( cQry,"CM",,8 )
+Else
+   cQry := "SELECT n.grupo, n.codigo, f.totalfac, f.totaliva, f.autoriza "+;
+           "FROM cadfactu f LEFT JOIN cadclien n "         +;
+            "USING( codigo_nit )"                          +;
+           "WHERE f.optica "      + aGT[12]                +;
+            " AND f.fechoy   >= " + xValToChar( aGT[11] )  +;
+            " AND f.fechoy   <= " + xValToChar( ::aLS[1] ) +;
+            " AND f.tipo      = " + xValToChar( oApl:Tipo )+;
+            " AND f.indicador <> 'A'"
+   ::hRes := If( MSQuery( oApl:oMySql:hConnect,cQry ) ,;
+                 MSStoreResult( oApl:oMySql:hConnect ), 0 )
+   ::nL   := MSNumRows( ::hRes )
+   ::aGT  := DsctoDevol( {aGT[12],aGT[11],::aLS[1]} )
+   AFILL( aGT,0 )
+   While ::nL > 0
+      ::aRS := MyReadRow( ::hRes )
+      AEVAL( ::aRS, { | xV,nP | ::aRS[nP] := MyClReadCol( ::hRes,nP ) } )
+      ::aRS[3] -= ::aRS[4]
+      nK := If( ::aRS[1],     1,;
+            If( ::aRS[5] == "GRUPO     ", 4,;
+            If( ::aRS[2] > 0, 3, 2 ) ) )
+      If ::aRS[5] == "FOCA      "
+         nK := 5
+      EndIf
+         aGT[nK]   += ::aRS[3]
+         aGT[nK+5] += ::aRS[4]
+      ::nL --
+   EndDo
+   MSFreeResult( ::hRes )
+   aGT[1] -= ::aGT[2]
+   aGT[2] -= ::aGT[1]
+   aGT[3] -= ::aGT[3]
+   aGT[5] -= ::aGT[4]
+   aGT[11] := aGT[2] + aGT[3] + aGT[4]
+EndIf
+RETURN aGT
 
 //------------------------------------//
 PROCEDURE Vence( nDias,aVence,nC,oRpt,nRes )

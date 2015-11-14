@@ -62,12 +62,12 @@ METHOD NEW() CLASS VDiarias
  aRes   := ::ArmarINF( "Diaria" )
  ::aEnc := { .t., oApl:cEmpresa, oApl:oEmp:Nit                 ,;
              "LISTADO DE VENTAS DIARIAS", NtChr( ::aLS[1],"3" ),;
-             { .F., 0.5,"FACTURA" }   , { .F., 2.0,"--ORDEN" } ,;
-             { .F., 3.3,"NOMBRE DEL CLIENTE" }                 ,;
-             { .T., 7.9,"VENTAS" }   , { .T., 9.5,"EFECTIVO" } ,;
-             { .T.,11.4,"CHEQUES" }  , { .T.,13.4,"TARJETAS" } ,;
-             { .T.,15.2,"BONOS" }    , { .T.,17.2,"OTRO.PAGOS" },;
-             { .T.,19.2,"DEDUCCION" }, { .T.,20.9,"RETENCION" } }
+             { .F., 0.5,"Factura" }   , { .T., 3.2,"O.Talla" } ,;
+             { .F., 3.4,"Nombre del Cliente" }                 ,;
+             { .T., 7.9,"Ventas" }   , { .T., 9.5,"Efectivo" } ,;
+             { .T.,11.4,"Cheques" }  , { .T.,13.4,"Tarjetas" } ,;
+             { .T.,15.2,"Bonos" }    , { .T.,17.2,"Otro.Pagos" },;
+             { .T.,19.2,"Deduccion" }, { .T.,20.9,"Retencion" } }
 If ::aLS[3] == 2
    ::ListoWIN( aRes )
    RETURN NIL
@@ -341,13 +341,13 @@ While ::nL > 0
    EndIf
    If ::nL == 0 .OR. ::aPG[10] # aRes[2]
       ::Cabecera( .t.,0.45 )
-         UTILPRN ::oUtil Self:nLinea,01.9 SAY STR(::aPG[10],7)  RIGHT
-         UTILPRN ::oUtil Self:nLinea,03.1 SAY STR(::aPG[11],9)  RIGHT
+         UTILPRN ::oUtil Self:nLinea,01.6 SAY STR(::aPG[10],7)  RIGHT
+         UTILPRN ::oUtil Self:nLinea,03.2 SAY STR(::aPG[11],9)  RIGHT
       If ::aPG[15] == "A"
-         UTILPRN ::oUtil Self:nLinea,03.3 SAY "** A N U L A D A **"
+         UTILPRN ::oUtil Self:nLinea,03.4 SAY "** A N U L A D A **"
          oAnu := {|| ::AnulaWIN() }
       Else
-         UTILPRN ::oUtil Self:nLinea,03.3 SAY LEFT( ::aPG[12],17 )
+         UTILPRN ::oUtil Self:nLinea,03.4 SAY LEFT( ::aPG[12],16 )
          UTILPRN ::oUtil Self:nLinea,07.9 SAY TRANSFORM(::aPG[14],"99,999,999" )       RIGHT
          UTILPRN ::oUtil Self:nLinea,09.5 SAY TRANSFORM(::aPG[01],cPict )              RIGHT
          UTILPRN ::oUtil Self:nLinea,11.4 SAY TRANSFORM(::aPG[02],cPict )              RIGHT
@@ -391,12 +391,12 @@ While ::nL > 0
    EndIf
    If ::nL == 0 .OR. ::aPG[10] # aRes[2]
       ::Cabecera( .t.,0.45 )
-         UTILPRN ::oUtil Self:nLinea,01.9 SAY STR(::aPG[10],7) RIGHT
-         UTILPRN ::oUtil Self:nLinea,03.1 SAY STR(::aPG[11],9) RIGHT
+         UTILPRN ::oUtil Self:nLinea,01.6 SAY STR(::aPG[10],7) RIGHT
+         UTILPRN ::oUtil Self:nLinea,03.2 SAY STR(::aPG[11],9) RIGHT
       If ::aPG[15] == "A"
-         UTILPRN ::oUtil Self:nLinea,03.3 SAY "** A N U L A D A **"
+         UTILPRN ::oUtil Self:nLinea,03.4 SAY "** A N U L A D A **"
       Else
-         UTILPRN ::oUtil Self:nLinea,03.3 SAY LEFT( ::aPG[12],17 )
+         UTILPRN ::oUtil Self:nLinea,03.4 SAY LEFT( ::aPG[12],16 )
          UTILPRN ::oUtil Self:nLinea,07.9 SAY TRANSFORM(::aPG[14],"99,999,999" )       RIGHT
          UTILPRN ::oUtil Self:nLinea,09.5 SAY TRANSFORM(::aPG[01],cPict )              RIGHT
          UTILPRN ::oUtil Self:nLinea,11.4 SAY TRANSFORM(::aPG[02],cPict )              RIGHT
@@ -504,9 +504,9 @@ While ::nL > 0
    ::ArmarPAG( aRes,1,"U" )
    oApl:nSaldo := aRes[4] -::aPG[1] -::aPG[2] -::aPG[3] -::aPG[4] -::aPG[5]
    ::Cabecera( .t.,0.45 )
-   UTILPRN ::oUtil Self:nLinea,01.9 SAY STR(aRes[1],7)  RIGHT
-   UTILPRN ::oUtil Self:nLinea,03.1 SAY STR(aRes[2],9)  RIGHT
-   UTILPRN ::oUtil Self:nLinea,03.3 SAY LEFT( aRes[3],17 )
+   UTILPRN ::oUtil Self:nLinea,01.7 SAY STR(aRes[1],7)  RIGHT
+   UTILPRN ::oUtil Self:nLinea,03.2 SAY STR(aRes[2],9)  RIGHT
+   UTILPRN ::oUtil Self:nLinea,03.4 SAY LEFT( aRes[3],16 )
    UTILPRN ::oUtil Self:nLinea,07.9 SAY TRANSFORM(aRes[5],"99,999,999" )         RIGHT
    UTILPRN ::oUtil Self:nLinea,09.5 SAY TRANSFORM(::aPG[01],cPict )              RIGHT
    UTILPRN ::oUtil Self:nLinea,11.4 SAY TRANSFORM(::aPG[02],cPict )              RIGHT
