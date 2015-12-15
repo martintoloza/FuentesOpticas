@@ -352,9 +352,12 @@ If ::lTit
    //CENTRO OPTICO DE LA COSTA S.A.S. - VSM
    //12345678901234567890123456789012345678
       If oApl:oEmp:DIVIDENOMB > 0
-         nSuma := LEN( ALLTRIM( oApl:oEmp:NOMBRE ) ) -;
-                  RAT( "-",oApl:oEmp:NOMBRE ) + oApl:oEmp:DIVIDENOMB
-       //  msginfo( nSuma )
+         If (nSuma := RAT( "-",oApl:oEmp:NOMBRE )) > 0
+             nSuma -= oApl:oEmp:DIVIDENOMB
+         Else
+            nSuma := LEN( ALLTRIM( oApl:oEmp:NOMBRE ) ) - oApl:oEmp:DIVIDENOMB
+         EndIf
+         //Msginfo( STR(nSuma),STR(RAT( "-",oApl:oEmp:NOMBRE )) )
       Else
          nSuma := 0
       EndIf
@@ -475,7 +478,7 @@ If lFin
       UTILPRN ::oUtil  9.3, 2.1 SAY "PROMOCION"
    EndIf
    If oApl:oNit:CODIGO > 0 .AND. EMPTY(oApl:oEmp:OBSERVA)
-      aRes := Letras( oApl:oFac:TOTALFAC,76 )
+      aRes := Letras( oApl:oFac:TOTALFAC,60 )
       UTILPRN ::oUtil 10.3, 1.5 SAY aRes[1]                       FONT ::aFnt[9]
       UTILPRN ::oUtil 10.8, 1.5 SAY aRes[2]                       FONT ::aFnt[9]
    EndIf
@@ -591,11 +594,14 @@ aDet := { {"0599000001  ","MONTURAS"         ,0,0,0,0},;
           {"0599000003  ","LENTES CONTACTOS" ,0,0,0,0},;
           {"0501        ","CONSULTAS"        ,0,0,0,0},;
           {"0502        ","AJUSTES MONTURAS" ,0,0,0,0},;
-          {"0503        ","COLOR_TRATAMIENTO",0,0,0,0} }
+          {"0503        ","COLOR_TRATAMIENTO",0,0,0,0},;
+          {"0301        ","LIQUIDOS"         ,0,0,0,0} }
 FOR nL := 1 TO ::nTL
    do Case
    Case LEFT( aDT[nL,1],2 ) == "01"
       cCod := "0599000001  "
+   Case LEFT( aDT[nL,1],2 ) == "03"
+      cCod := "0301        "
    Case LEFT( aDT[nL,1],2 ) >= "60"
       cCod := "0599000003  "
    OtherWise

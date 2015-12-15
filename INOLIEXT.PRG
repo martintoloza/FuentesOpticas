@@ -70,17 +70,19 @@ If oApl:nEmpresa == 18
             " AND c.autoriza <> 'FOCA'"
 ElseIf oApl:nEmpresa == 21
    If aLS[1] == "0599000001  "
-   cQry := "SELECT c.fecha, c.numero, d.cantidad, d.precioven, d.descri "+;
-           "FROM cadantid d, cadantic c "             +;
-           "WHERE d.codart = '0599000001'"            +;
-            " AND c.optica = d.optica"                +;
-            " AND c.numero = d.numero"                +;
-            " AND c.optica = 21"                      +;
-            " AND c.fecha >= " + xValToChar( aLS[2] ) +;
-            " AND c.fecha <= " + xValToChar( aLS[3] )
+      cQry := "SELECT c.fecha, c.numero, d.cantidad, d.precioven, d.descri "+;
+              "FROM cadantid d, cadantic c "             +;
+              "WHERE d.codart = '0599000001'"            +;
+               " AND c.optica = d.optica"                +;
+               " AND c.numero = d.numero"                +;
+               " AND c.optica = 21"                      +;
+               " AND c.fecha >= " + xValToChar( aLS[2] ) +;
+               " AND c.fecha <= " + xValToChar( aLS[3] )
+   ElseIf aLS[2] >= CTOD("01.09.2015")
+      cQry := STRTRAN( cQry,"[OPT]","21" )
    Else
-   cQry := STRTRAN( cQry,"[OPT]","18" ) +;
-            " AND c.autoriza = 'FOCA'"
+      cQry := STRTRAN( cQry,"[OPT]","18" ) +;
+               " AND c.autoriza = 'FOCA'"
    EndIf
 Else
    cQry := STRTRAN( cQry,"[OPT]",LTRIM(STR(oApl:nEmpresa)) )

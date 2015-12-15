@@ -389,8 +389,7 @@ ElseIf ::oMtc:CODIGO_NIT == 1569 .AND.;
    ::oMtd:PPUBLI := ::aCam[10] := ::oMtd:PVENTA
    ::oMtd:PVENTA -= ROUND( ::aCam[10]*::aCab[5],0 )
 Else
-   ::aCam[10]    := ::oMtd:PVENTA
-   ::oMtd:PPUBLI := ROUND( ::aCam[10]*::aCab[5],0 )
+   ::oMtd:PPUBLI := ROUND( ::oMtd:PVENTA*::aCab[5],0 )
 EndIf
 If lNew
    ::GrabaCab()

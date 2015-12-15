@@ -74,8 +74,8 @@ RETURN
 
 //------------------------------------//
 CLASS TLVentas FROM TIMPRIME
- DATA aLS, aLV, nC, nF, oRpt
- DATA hRes, nL
+ DATA aGT, aLS, aLV, nC, nF, oRpt
+ DATA cQry, hRes, nL
 
  METHOD NEW( nOpc,nOK ) Constructor
  METHOD ArmarINF( aRes,cQry )
@@ -87,6 +87,9 @@ CLASS TLVentas FROM TIMPRIME
  METHOD ListoRes()
  METHOD ListaRes()
  METHOD Armo( aVT,nF,nC )
+ METHOD LaserRes( aGT,aVT )
+ METHOD Saltar( nC,nL,nMax )
+ METHOD DatosRes( aVT )
  METHOD ArmoExcel( aVT,nF,nC )
 ENDCLASS
 
@@ -925,100 +928,37 @@ RETURN NIL
 
 //3-----------------------------------//
 METHOD ListaRes() CLASS TLVentas
-   LOCAL oRpt, cCod, nC, nF, nK, nM, nT, cFntC, cFntN, cQry, hRes
-   LOCAL aGT := ARRAY(19,11), aVT := ARRAY(17,02)
-cQry  := If( ::aLS[7] == "C", "v.pcosto", "v.precioven + v.desmon" )
-cFntC := "SELECT u.numfac, u.totaldes, u.totaliva, u.totalfac, n.grupo, "   +;
-         "n.codigo, v.codart, v.fecfac, v.fecdev, v.indicador, v.cantidad, "+;
-          cQry + ", u.autoriza "                      +;
-         "FROM cadventa v, cadfactu u, cadclien n "   +;
-         "WHERE u.optica  = v.optica"                 +;
-          " AND u.numfac  = v.numfac"                 +;
-          " AND u.tipo    = v.tipo"                   +;
-          " AND u.optica  = [Optica]"                 +;
-          " AND u.fechoy >= " + xValToChar( ::aLS[1] )+;
-          " AND u.fechoy <= " + xValToChar( ::aLS[2] )+;
-          " AND u.tipo    = " + xValToChar(oApl:Tipo) +;
-          " AND u.indicador <> 'A'"                   +;
-          " AND n.codigo_nit = u.codigo_nit ORDER BY u.numfac"
-AEVAL( aGT, { |x| AFILL( x,"",1,3 ) } )
-AEVAL( aGT, { |x| AFILL( x, 0,4,8 ) } )
+   LOCAL oRpt, cCod, nC, nF, nK, nM, nT, cFntC, cFntN
+   LOCAL aGT := ARRAY(19,11), aVT := ARRAY(17,03)
+cCod  := If( ::aLS[7] == "C", "v.pcosto", "v.precioven + v.desmon" )
+::aGT := ARRAY(17,12)
+::cQry := "SELECT u.numfac, u.totaldes, u.totaliva, u.totalfac, n.grupo, "   +;
+          "n.codigo, v.codart, v.fecfac, v.fecdev, v.indicador, v.cantidad, "+;
+           cCod + ", u.autoriza "                      +;
+          "FROM cadventa v, cadfactu u, cadclien n "   +;
+          "WHERE u.optica  = v.optica"                 +;
+           " AND u.numfac  = v.numfac"                 +;
+           " AND u.tipo    = v.tipo"                   +;
+           " AND u.optica  = [Optica]"                 +;
+           " AND u.fechoy >= " + xValToChar( ::aLS[1] )+;
+           " AND u.fechoy <= " + xValToChar( ::aLS[2] )+;
+           " AND u.tipo    = " + xValToChar(oApl:Tipo) +;
+           " AND u.indicador <> 'A'"                   +;
+           " AND n.codigo_nit = u.codigo_nit ORDER BY u.numfac"
+AEVAL(::aGT, { |x| AFILL( x,0 ) } )
+AEVAL(  aGT, { |x| AFILL( x,"",1,3 ) } )
+AEVAL(  aGT, { |x| AFILL( x, 0,4,8 ) } )
  ::NEW( 3,1 )
-If ::aLS[11] == 3
+oApl:oEmp:Seek( {"orden_dato >= ",1},"orden_dato" )
+If ::aLS[11] == 2
+   ::LaserRes( aGT,aVT )
+   RETURN NIL
+ElseIf ::aLS[11] == 3
    ::ArmoExcel()
 EndIf
-oApl:oEmp:Seek( {"orden_dato >= ",1},"orden_dato" )
 While !oApl:oEmp:Eof()
-   AEVAL( aVT, { |x| AFILL( x,0 ) } )
-   ::aLS[9] := !Rango( oApl:oEmp:RSV,{8,10} )
-   cQry := STRTRAN( cFntC,"[Optica]",LTRIM(STR(oApl:oEmp:OPTICA)) )
-   hRes := If( MSQuery( oApl:oMySql:hConnect,cQry ) ,;
-               MSStoreResult( oApl:oMySql:hConnect ), 0 )
-   nT   := MSNumRows( hRes )
-   nK   := 0
-   While nT > 0
-      cQry := MyReadRow( hRes )
-      AEVAL( cQry, { | xV,nP | cQry[nP] := MyClReadCol( hRes,nP ) } )
-      cCod := TRIM( cQry[07] )
-      nC   := If( LEFT(DTOS(cQry[08]),6) <= LEFT(DTOS(cQry[09]),6) .AND.;
-                  cQry[10] == "D", 0, cQry[11] )
-      nF   := cQry[12] * If( ::aLS[7] == "C" .AND. oApl:oEmp:OPTICA # 0, nC, 1 )
-      do Case
-      Case cCod == "0599000001" .OR. LEFT(cCod,2) = "01" // Montura
-         nM := 1
-         If LEFT(cCod,2) == "01"
-            nM := If( Buscar( "SELECT tipomontu FROM cadinven WHERE codigo = '"+;
-                              cCod + "'","CM",,8,,1 ) == "S", 2, 1 )
-         EndIf
-         aVT[nM,1] += If( cCod == "0599000001", 0, nC )
-         aVT[nM,2] += nF
-      Case cCod == "0599000002" .OR. LEFT(cCod,2) = "02" // Oftalmicos
-         aVT[03,1] += If( SUBSTR(cCod,4,1) $ "12", nC, 0 )
-         aVT[03,2] += nF
-      Case LEFT(cCod,2) >= "60" .OR. ;
-                cCod = "0599000003" .OR. ;
-                cCod = "0504"
-         aVT[04,1] += If( LEFT(cCod,2) = "05", 0, nC )
-         aVT[04,2] += nF
-      Case LEFT(cCod,2) = "03"                  // Liquidos
-         aVT[05,1] += cQry[11]
-         aVT[05,2] += nF
-      Case LEFT(cCod,2) = "04"                  // Accesorios
-         aVT[06,1] += cQry[11]
-         aVT[06,2] += nF
-      Case LEFT(cCod,4) = "0501"                // Consultas
-         aVT[07,1] += cQry[11]
-         aVT[07,2] += nF
-      OtherWise                                 // Varios
-         aVT[08,2] += nF
-      EndCase
-         aVT[09,2] += nF
-      nT --
-      If nK  # cQry[01]
-         nK := cQry[01]
-         nC := If( cQry[05] .OR. cQry[13] == "GRUPO     ", 16,;
-               If( cQry[06] > 0, 17, 15 ) )
-         aVT[10,2] +=  cQry[02] //TOTALDES
-         aVT[13,2] +=  cQry[03] //TOTALIVA
-         aVT[12,2] +=  cQry[04] //TOTALFAC
-         aVT[nC,2] += (cQry[04] - cQry[03])
-      EndIf
-   EndDo
-   MSFreeResult( hRes )
-   If ::aLS[7] == "P"
-      cQry := DsctoDevol( {" = " + LTRIM(STR(oApl:oEmp:OPTICA)),::aLS[1],::aLS[2]} )
-      aVT[11,2] := cQry[1] + cQry[2] + cQry[3] + cQry[4]
-      aVT[15,2] -= cQry[1]
-      aVT[16,2] -= cQry[2]
-      aVT[17,2] -= cQry[3] + cQry[4]
-   EndIf
+   ::DatosRes( @aVT )
    If aVT[12,2] > 0
-      aVT[12,2] := aVT[09,2] - aVT[10,2] - aVT[11,2]
-      aVT[14,2] := aVT[12,2] + aVT[13,2]
-      aVT[15,1] := ROUND( aVT[15,2]/aVT[12,2]*100,2 )
-      aVT[16,1] := ROUND( aVT[16,2]/aVT[12,2]*100,2 )
-      aVT[17,1] := ROUND( aVT[17,2]/aVT[12,2]*100,2 )
-      AEVAL( aVT,{|x| aVT[09,1] += x[1] },1,7 )
       nC := If( oApl:oEmp:ORDEN_DATO < 12, 1, 2 )
       If (nT := oApl:oEmp:RSV) == 0
          nT := LEN( aGT[1] ) + 1
@@ -1164,6 +1104,201 @@ Else
 */
 EndIf
 RETURN cVal
+
+//------------------------------------//
+METHOD LaserRes( aGT,aVT ) CLASS TLVentas
+   LOCAL nF, nL := 1, nC := 6
+ ::aEnc := { .t.,"RESUMEN DE VENTAS OPTICAS DEL GRUPO",;
+             "DESDE "+NtChr( ::aLS[1],"2" )+ " HASTA " + NtChr( ::aLS[2],"2" ),;
+             3.0,11.0 }
+ ::Init( ::aEnc[2], .f. ,, !::aLS[3] ,,,, 5 )
+ ::SetLandscape()
+   PAGE
+While !oApl:oEmp:Eof()
+   ::DatosRes( @aVT )
+   If aVT[12,3] > 0
+      ::Saltar( @nC,@nL,25 )
+      FOR nF := 1 TO ::aLS[12]
+         If ::nLinea == ::aEnc[ nL+3 ]
+            UTILPRN ::oUtil Self:nLinea,nC+4.0 SAY PADC( ::aLS[13],29,"_" ) FONT ::aFnt[6] RIGHT
+            ::nLinea += 0.32
+         EndIf
+         If nC == 6
+            UTILPRN ::oUtil Self:nLinea,01.2   SAY ::aLV[nF]
+         EndIf
+            UTILPRN ::oUtil Self:nLinea,nC     SAY TRANSFORM(aVT[nF,1], "@Z 999,999" )     RIGHT
+            UTILPRN ::oUtil Self:nLinea,nC+1.4 SAY TRANSFORM(aVT[nF,2], "@Z 999.99%" )     RIGHT
+            UTILPRN ::oUtil Self:nLinea,nC+4.0 SAY TRANSFORM(aVT[nF,3],"999,999,999,999" ) RIGHT
+         If nF == 8 .OR. nF == 11 .OR. nF == 13
+            ::nLinea += 0.32
+            UTILPRN ::oUtil Self:nLinea,nC+4.0 SAY REPLICATE("=",29) RIGHT
+         ElseIf nF == 14
+            ::nLinea += 0.32
+         EndIf
+            ::nLinea += 0.32
+      NEXT nF
+      nC += 5.5
+   EndIf
+   oApl:oEmp:Skip(1):Read()
+   oApl:oEmp:xLoad()
+EndDo
+   If nC > 6
+      ::nLinea := { 3.0,11.0,3.0 }[ nL+1 ]
+   EndIf
+   ::Saltar( @nC,@nL,7 )
+   UTILPRN ::oUtil Self:nLinea,10.0 SAY PADC( "TOTAL GENERAL" ,29,"-" ) FONT ::aFnt[6] RIGHT
+   UTILPRN ::oUtil Self:nLinea,15.5 SAY PADC( "TOTAL C.O.C."  ,29,"-" ) FONT ::aFnt[6] RIGHT
+   UTILPRN ::oUtil Self:nLinea,21.0 SAY PADC( "TOTAL GERDTS"  ,29,"-" ) FONT ::aFnt[6] RIGHT
+   UTILPRN ::oUtil Self:nLinea,26.5 SAY PADC( "TOTAL PANORAMA",29,"-" ) FONT ::aFnt[6] RIGHT
+           ::nLinea += 0.32
+FOR nF := 1 TO ::aLS[12]
+      UTILPRN ::oUtil Self:nLinea,01.2   SAY ::aLV[nF]
+   FOR nL := 1 TO 12 STEP 3
+      If nF <= 7
+         ::aGT[nF,nL+1] := ROUND(::aGT[nF,nL+2] /::aGT[09,nL+2]* 100,2 )
+      ElseIf nF >= 15
+         ::aGT[nF,nL+1] := ROUND(::aGT[nF,nL+2] /::aGT[12,nL+2]* 100,2 )
+      EndIf
+      UTILPRN ::oUtil Self:nLinea,nC     SAY TRANSFORM(::aGT[nF,nL]  , "@Z 999,999" )     RIGHT
+      UTILPRN ::oUtil Self:nLinea,nC+1.4 SAY TRANSFORM(::aGT[nF,nL+1], "@Z 999.99%" )     RIGHT
+      UTILPRN ::oUtil Self:nLinea,nC+4.0 SAY TRANSFORM(::aGT[nF,nL+2],"999,999,999,999" ) RIGHT
+      nC += 5.5
+   NEXT nL
+   nC := 6
+   If nF == 8 .OR. nF == 11 .OR. nF == 13
+      ::nLinea += 0.32
+      UTILPRN ::oUtil Self:nLinea,10.0 SAY REPLICATE("=",29) RIGHT
+      UTILPRN ::oUtil Self:nLinea,15.5 SAY REPLICATE("=",29) RIGHT
+      UTILPRN ::oUtil Self:nLinea,21.0 SAY REPLICATE("=",29) RIGHT
+      UTILPRN ::oUtil Self:nLinea,26.5 SAY REPLICATE("=",29) RIGHT
+   ElseIf nF == 14
+      ::nLinea += 0.32
+   EndIf
+      ::nLinea += 0.32
+NEXT nF
+   ENDPAGE
+IMPRIME END .F.
+RETURN NIL
+
+//------------------------------------//
+METHOD Saltar( nC,nL,nMax ) CLASS TLVentas
+If nC >= nMax
+   If ::nLinea > 10
+      ::nLinea += If( ::nLinea > 18, ::nEndLine, 0.32 )
+      ::aEnc[1] := ::Separator( 0.32,1 )
+      nC := 6
+      nL := If( nL == 1, 2, 1 )
+   EndIf
+EndIf
+   ::nLinea := ::aEnc[ nL+3 ]
+If ::aEnc[1]
+   ::aEnc[1] := .F.
+   ::Centrar( ::aEnc[2],::aFnt[4],1.0 )
+   ::Centrar( ::aEnc[3],::aFnt[2],1.5 )
+   ::FechaHora( ,,20 )
+   ::nLinea  := 3.00
+   UTILPRN ::oUtil SELECT ::aFnt[5]
+EndIf
+RETURN NIL
+
+//------------------------------------//
+METHOD DatosRes( aVT ) CLASS TLVentas
+   LOCAL aRes, cCod, nC, nF, nM, nK := 0
+ aRes := STRTRAN( ::cQry,"[Optica]",LTRIM(STR(oApl:oEmp:OPTICA)) )
+ ::hRes := If( MSQuery( oApl:oMySql:hConnect,aRes ) ,;
+               MSStoreResult( oApl:oMySql:hConnect ), 0 )
+ ::nL   := MSNumRows( ::hRes )
+ ::aLS[9] := !Rango( oApl:oEmp:RSV,{8,10} )
+ AEVAL( aVT, { |x| AFILL( x,0 ) } )
+While ::nL > 0
+   aRes := MyReadRow( ::hRes )
+   AEVAL( aRes, { | xV,nP | aRes[nP] := MyClReadCol( ::hRes,nP ) } )
+   cCod := TRIM( aRes[07] )
+   nC   := If( LEFT(DTOS(aRes[08]),6) <= LEFT(DTOS(aRes[09]),6) .AND.;
+               aRes[10] == "D", 0, aRes[11] )
+   nF   := aRes[12] * If( ::aLS[7] == "C" .AND. oApl:oEmp:OPTICA # 0, nC, 1 )
+   do Case
+   Case cCod == "0599000001" .OR. LEFT(cCod,2) = "01" // Montura
+      nM := 1
+      If LEFT(cCod,2) == "01"
+         nM := If( Buscar( "SELECT tipomontu FROM cadinven WHERE codigo = '"+;
+                           cCod + "'","CM",,8,,1 ) == "S", 2, 1 )
+      EndIf
+      aVT[nM,1] += If( cCod == "0599000001", 0, nC )
+      aVT[nM,3] += nF
+   Case cCod == "0599000002" .OR. LEFT(cCod,2) = "02" // Oftalmicos
+      aVT[03,1] += If( SUBSTR(cCod,4,1) $ "12", nC, 0 )
+      aVT[03,3] += nF
+   Case LEFT(cCod,2) >= "60" .OR. ;
+             cCod = "0599000003" .OR. ;
+             cCod = "0504"
+      aVT[04,1] += If( LEFT(cCod,2) = "05", 0, nC )
+      aVT[04,3] += nF
+   Case LEFT(cCod,2) = "03"                  // Liquidos
+      aVT[05,1] += aRes[11]
+      aVT[05,3] += nF
+   Case LEFT(cCod,2) = "04"                  // Accesorios
+      aVT[06,1] += aRes[11]
+      aVT[06,3] += nF
+   Case LEFT(cCod,4) = "0501"                // Consultas
+      aVT[07,1] += aRes[11]
+      aVT[07,3] += nF
+   OtherWise                                 // Varios
+      aVT[08,3] += nF
+   EndCase
+      aVT[09,3] += nF
+   ::nL --
+   If nK  # aRes[01]
+      nK := aRes[01]
+      nC := If( aRes[05] .OR. aRes[13] == "GRUPO     ", 16,;
+            If( aRes[06] > 0, 17, 15 ) )
+      aVT[10,3] +=  aRes[02] //TOTALDES
+      aVT[13,3] +=  aRes[03] //TOTALIVA
+      aVT[12,3] +=  aRes[04] //TOTALFAC
+      aVT[nC,3] += (aRes[04] - aRes[03])
+   EndIf
+EndDo
+MSFreeResult( ::hRes )
+If ::aLS[7] == "P"
+   aRes := DsctoDevol( {" = " + LTRIM(STR(oApl:oEmp:OPTICA)),::aLS[1],::aLS[2]} )
+   aVT[11,3] := aRes[1] + aRes[2] + aRes[3] + aRes[4]
+   aVT[15,3] -= aRes[1]
+   aVT[16,3] -= aRes[2]
+   aVT[17,3] -= aRes[3] + aRes[4]
+EndIf
+   //TOTALFAC
+If aVT[12,3] > 0
+   aVT[12,3] := aVT[09,3] - aVT[10,3] - aVT[11,3]
+   aVT[14,3] := aVT[12,3] + aVT[13,3]
+   AEVAL( aVT,{|x| aVT[09,1] += x[1] },1,7 )
+   nK := If( oApl:oEmp:RSV ==  8,  7,;
+         If( oApl:oEmp:RSV == 10, 10, 4 ) )
+   FOR nF := 1 TO ::aLS[12]
+      ::aGT[nF, 1]   += aVT[nF,1]
+      ::aGT[nF, 2]   += aVT[nF,2]
+      ::aGT[nF, 3]   += aVT[nF,3]
+      ::aGT[nF,nK]   += aVT[nF,1]
+      ::aGT[nF,nK+1] += aVT[nF,2]
+      ::aGT[nF,nK+2] += aVT[nF,3]
+      If nF <= 7
+         aVT[nF,2] := ROUND( aVT[nF,3] / aVT[9,3] * 100,2 )
+      ElseIf nF >= 15
+         aVT[nF,2] := ROUND( aVT[nF,3] / aVT[12,3]* 100,2 )
+      EndIf
+   NEXT nF
+   ::aLS[13] := TRIM(oApl:oEmp:LOCALIZ)
+   If !IsAlpha( RIGHT( ::aLS[13],1 ) )
+      nF := RAT( "-",oApl:oEmp:NOMBRE )
+      ::aLS[13] := ALLTRIM(SUBSTR( oApl:oEmp:NOMBRE,nF+1 ))
+   EndIf
+   If ::aLS[11] == 1
+      ::aLS[13] := PADC( ::aLS[13],30,"_" )
+   EndIf
+   If oApl:oEmp:RSV ==  8
+      aVT[12,3] := 0
+   EndIf
+EndIf
+RETURN NIL
 
 //------------------------------------//
 METHOD ArmoExcel( aVT,nF,nC ) CLASS TLVentas

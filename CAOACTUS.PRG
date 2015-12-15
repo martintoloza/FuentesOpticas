@@ -573,11 +573,18 @@ If oApl:nEmpresa == 18 .OR. oApl:nEmpresa == 21
             " AND d.numfac  = c.numfac"                 +;
             " AND d.tipo    = c.tipo"                   +;
             STRTRAN( cGI,"codigo","codart" )            +;
-            " AND c.optica  = 18"                       +;
+            " AND c.optica  = [X]"                      +;
             " AND c.fechoy >= " + xValToChar( aLS[1] )  +;
-            " AND c.fechoy <= " + xValToChar( aLS[2] )  +;
-            " AND c.autoriza "                          +;
-            If( oApl:nEmpresa == 18, "<>", "=" ) + " 'FOCA'"
+            " AND c.fechoy <= " + xValToChar( aLS[2] )
+   If oApl:nEmpresa == 18
+      cQry := STRTRAN( cQry,"[X]","18" ) +;
+            " AND c.autoriza <> 'FOCA'"
+   Else
+      cQry := STRTRAN( cQry,"[X]","21" )
+      If aLS[1] <= CTOD("31.08.2015")
+         cQry += " AND c.autoriza = 'FOCA'"
+      EndIf
+   EndIf
 Else
    cQry := "SELECT codart, cantidad "                   +;
            "FROM cadventa "                             +;
