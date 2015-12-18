@@ -172,12 +172,12 @@ DEFINE DIALOG oDlg RESOURCE "FACTURAS" TITLE cTit + oApl:cEmpresa OF oApl:oWnd
 //        (If( LEFT( oF:aV[oLbx:nAt,01],2 ) == "01" .AND. uVar > 1,;
 //        (MsgStop( "En Montura la Cantidad debe ser 1","<< OJO >>" ), .f.), .t. ))) }
    ADD COLUMN TO BROWSE oLbx DATA ARRAY ELEMENT 7;
-       TITLE "Precio"+CRLF+"Neto"   PICTURE "99,999,999" ;
+       TITLE "Precio"+CRLF+"Neto"   PICTURE "999,999,999" ;
        SIZE  76 EDITABLE;
        3DLOOK TRUE, TRUE, TRUE;
        MOVE DT_MOVE_NEXT;
        ALIGN DT_RIGHT, DT_CENTER, DT_RIGHT;
-       FOOTER { || TRANSFORM( oF:aM[09], "99,999,999" ) };
+       FOOTER { || TRANSFORM( oF:aM[09], "999,999,999" ) };
        POSTEDIT { |uVar| If( oLbx:lChanged, oF:Dscto( 7,oLbx,uVar ), ) };
        WHEN oF:EditArray( oLbx )
    ADD COLUMN TO BROWSE oLbx DATA ARRAY ELEMENT 5;

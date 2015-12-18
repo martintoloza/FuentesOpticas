@@ -311,12 +311,12 @@ EndIf
                 ::aF[4] := ROUND((aDT[nL,6]+aDT[nL,7]) / aDT[nL,4],0)
              EndIf
              UTILPRN ::oUtil Self:nLinea,10.2 SAY TRANSFORM( aDT[nL,4],  "999" )        RIGHT
-             UTILPRN ::oUtil Self:nLinea,12.5 SAY TRANSFORM(   ::aF[4],  "99,999,999" ) RIGHT
+             UTILPRN ::oUtil Self:nLinea,12.5 SAY TRANSFORM(   ::aF[4], "999,999,999" ) RIGHT
              ::aF[4] := aDT[nL,7] + aDT[nL,8]   //oVen:PRECIOVEN + oVen:MONTOIVA
              UTILPRN ::oUtil Self:nLinea,14.5 SAY TRANSFORM( aDT[nL,6],"@Z 9,999,999" ) RIGHT
-             UTILPRN ::oUtil Self:nLinea,16.5 SAY TRANSFORM( aDT[nL,7],  "99,999,999" ) RIGHT
+             UTILPRN ::oUtil Self:nLinea,16.5 SAY TRANSFORM( aDT[nL,7], "999,999,999" ) RIGHT
              UTILPRN ::oUtil Self:nLinea,18.5 SAY TRANSFORM( aDT[nL,8],   "9,999,999" ) RIGHT
-             UTILPRN ::oUtil Self:nLinea,20.5 SAY TRANSFORM(   ::aF[4],  "99,999,999" ) RIGHT
+             UTILPRN ::oUtil Self:nLinea,20.5 SAY TRANSFORM(   ::aF[4], "999,999,999" ) RIGHT
           EndIf
              ::aF[2] ++
           If ::aF[2] == 8 .AND. nL < ::nTL
@@ -485,9 +485,9 @@ If lFin
 
    ::aF[4] := oApl:oFac:TOTALFAC - oApl:oFac:TOTALIVA
    UTILPRN ::oUtil  9.9,14.5 SAY TRANSFORM( oApl:oFac:TOTALDES,"@Z 9,999,999" ) RIGHT
-   UTILPRN ::oUtil  9.9,16.5 SAY TRANSFORM(            ::aF[4],  "99,999,999" ) RIGHT
+   UTILPRN ::oUtil  9.9,16.5 SAY TRANSFORM(            ::aF[4], "999,999,999" ) RIGHT
    UTILPRN ::oUtil  9.9,18.5 SAY TRANSFORM( oApl:oFac:TOTALIVA,   "9,999,999" ) RIGHT
-   UTILPRN ::oUtil  9.9,20.5 SAY TRANSFORM( oApl:oFac:TOTALFAC,  "99,999,999" ) RIGHT
+   UTILPRN ::oUtil  9.9,20.5 SAY TRANSFORM( oApl:oFac:TOTALFAC, "999,999,999" ) RIGHT
 
    aP   := "SELECT p.formapago, p.pagado - IFNULL(p.p_de_mas,0), p.descuento, p.deduccion + "    +;
                   "p.retencion + IFNULL(p.retiva,0) + IFNULL(p.retica,0), p.numcheque, b.nombre "+;
@@ -518,7 +518,7 @@ If lFin
          UTILPRN ::oUtil aP[2],12.5 SAY TRANSFORM( aRes[3]+aRes[4],"9,999,999.99" ) RIGHT
          UTILPRN ::oUtil aP[2],15.0 SAY TRANSFORM( aRes[2]        ,"9,999,999.99" ) RIGHT
       If aP[1] == 2
-         UTILPRN ::oUtil aP[2],17.5 SAY TRANSFORM( oApl:nSaldo,"@Z 99,999,999.99" ) RIGHT
+         UTILPRN ::oUtil aP[2],17.5 SAY TRANSFORM( oApl:nSaldo,"@Z 999,999,999.99" ) RIGHT
          oApl:nSaldo := 0
       EndIf
       aP[1] ++
@@ -526,7 +526,7 @@ If lFin
       nL    --
    EndDo
    MSFreeResult( hRes )
-         UTILPRN ::oUtil aP[2],20.5 SAY TRANSFORM( oApl:nSaldo,"@Z 99,999,999.99" ) RIGHT
+         UTILPRN ::oUtil aP[2],20.5 SAY TRANSFORM( oApl:nSaldo,"@Z 999,999,999.99" ) RIGHT
 EndIf
    If ::nPage > 1
       UTILPRN ::oUtil 12.1,18.0 SAY "Pagina" + STR(::nPage,3) + " DE" + STR(::aEnc[17],3)
@@ -636,9 +636,9 @@ FOR nK := 1 TO LEN( aDet )
          UTILPRN ::oUtil Self:nLinea,10.3 SAY TRANSFORM( aDet[nK,3],  "999" )        RIGHT
          UTILPRN ::oUtil Self:nLinea,12.5 SAY TRANSFORM( nPUnitario,  "99,999,999" ) RIGHT
          UTILPRN ::oUtil Self:nLinea,14.5 SAY TRANSFORM( aDet[nK,5],"@Z 9,999,999" ) RIGHT
-         UTILPRN ::oUtil Self:nLinea,16.5 SAY TRANSFORM( aDet[nK,4],  "99,999,999" ) RIGHT
+         UTILPRN ::oUtil Self:nLinea,16.5 SAY TRANSFORM( aDet[nK,4], "999,999,999" ) RIGHT
          UTILPRN ::oUtil Self:nLinea,18.5 SAY TRANSFORM( aDet[nK,6],   "9,999,999" ) RIGHT
-         UTILPRN ::oUtil Self:nLinea,20.5 SAY TRANSFORM(    ::aF[4],  "99,999,999" ) RIGHT
+         UTILPRN ::oUtil Self:nLinea,20.5 SAY TRANSFORM(    ::aF[4], "999,999,999" ) RIGHT
       EndIf
    EndIf
 NEXT nK

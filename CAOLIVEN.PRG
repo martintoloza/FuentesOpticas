@@ -87,7 +87,7 @@ CLASS TLVentas FROM TIMPRIME
  METHOD ListoRes()
  METHOD ListaRes()
  METHOD Armo( aVT,nF,nC )
- METHOD LaserRes( aGT,aVT )
+ METHOD LaserRes( aVT )
  METHOD Saltar( nC,nL,nMax )
  METHOD DatosRes( aVT )
  METHOD ArmoExcel( aVT,nF,nC )
@@ -946,36 +946,32 @@ cCod  := If( ::aLS[7] == "C", "v.pcosto", "v.precioven + v.desmon" )
            " AND u.indicador <> 'A'"                   +;
            " AND n.codigo_nit = u.codigo_nit ORDER BY u.numfac"
 AEVAL(::aGT, { |x| AFILL( x,0 ) } )
-AEVAL(  aGT, { |x| AFILL( x,"",1,3 ) } )
-AEVAL(  aGT, { |x| AFILL( x, 0,4,8 ) } )
  ::NEW( 3,1 )
 oApl:oEmp:Seek( {"orden_dato >= ",1},"orden_dato" )
 If ::aLS[11] == 2
-   ::LaserRes( aGT,aVT )
+   ::LaserRes( aVT )
    RETURN NIL
 ElseIf ::aLS[11] == 3
    ::ArmoExcel()
 EndIf
+AEVAL(  aGT, { |x| AFILL( x,"",1,3 ) } )
+AEVAL(  aGT, { |x| AFILL( x, 0,4,8 ) } )
 While !oApl:oEmp:Eof()
    ::DatosRes( @aVT )
-   If aVT[12,2] > 0
+   If aVT[12,3] > 0
       nC := If( oApl:oEmp:ORDEN_DATO < 12, 1, 2 )
       If (nT := oApl:oEmp:RSV) == 0
          nT := LEN( aGT[1] ) + 1
          AEVAL( aGT, { |x| AADD( x,0 ), AADD( x,0 ) } )
-         aGT[18,nT] := ::Armo()
+         aGT[18,nT] := ::aLS[13]
       ElseIf ::aLS[11] == 1 .AND. ::aLS[9]
-         aGT[18,nC] += ::Armo() + "  "
+         aGT[18,nC] += ::aLS[13] + "  "
          aGT[19,nC] += REPLICATE("=",30) + "  "
       EndIf
       FOR nF := 1 TO 17
          If oApl:oEmp:RSV > 0 .AND. ::aLS[11] == 1 .AND. ::aLS[9]
             aGT[nF,nC] += ::Armo( aVT,nF )
          EndIf
-         aGT[nF,04]   += aVT[nF,1]
-         aGT[nF,05]   += aVT[nF,2]
-         aGT[nF,nT]   += aVT[nF,1]
-         aGT[nF,nT+1] += aVT[nF,2]
       NEXT nF
       If ::aLS[11] == 3
          If ::nF == 4 .AND. nC == 2
@@ -996,18 +992,15 @@ aGT[18,04] := "----------TOTAL GENERAL-------"
 aGT[18,06] := "----------TOTAL C.O.C.--------"  //RSV =  6
 aGT[18,08] := "----------TOTAL GERDTS--------"  //RSV =  8
 aGT[18,10] := "----------TOTAL PANORAMA------"  //RSV = 10
+cCod := ::Armo()
 If ::aLS[11] == 1
    FOR nF := 1 TO ::aLS[12]
-      nT := LEN( aGT[nF] )
-      If nF >= 15
-         aGT[nF,4] := ROUND( aGT[nF,5]/aGT[12,5]*100,2 )
-         aGT[nF,6] := ROUND( aGT[nF,7]/aGT[12,7]*100,2 )
-         aGT[nF,8] := ROUND( aGT[nF,9]/aGT[12,9]*100,2 )
-      EndIf
-      FOR nC := 4 TO nT STEP 2
-         aGT[nF,03] += ::Armo( aGT,nF,nC )
+      nK := 2
+      FOR nC := 1 TO 12 STEP 3
+         aGT[nF,03] += ::Armo( ::aGT,nF,nC )
          If nF == 17
-            aGT[18,03] += aGT[18,nC] + "  "
+            nK += 2
+            aGT[18,03] += aGT[18,nK] + "  "
             aGT[19,03] += REPLICATE("=",30) + "  "
          EndIf
       NEXT nC
@@ -1046,20 +1039,16 @@ Else
    ::nC := 2
    ::ArmoExcel()
    FOR nF := 1 TO ::aLS[12]
-      nT := LEN( aGT[nF] )
-      If nF >= 14
-         aGT[nF,4] := ROUND( aGT[nF,5]/aGT[11,5]*100,2 )
-         aGT[nF,6] := ROUND( aGT[nF,7]/aGT[11,7]*100,2 )
-         aGT[nF,8] := ROUND( aGT[nF,9]/aGT[11,9]*100,2 )
-      EndIf
-      FOR nC := 4 TO nT STEP 2
+      nK := 2
+      FOR nC := 1 TO 12 STEP 3
          If nF == 1
-            ::oRpt:Say( ::nF-1, ::nC, aGT[18,nC],,,,,, 7 )
+            nK += 2
+            ::oRpt:Say( ::nF-1, ::nC, aGT[18,nK],,,,,, 7 )
             ::oRpt:Combinar( CHR( ::nC+64 ) + LTRIM(STR(::nF-1)) + ":" +;
                              CHR( ::nC+65 ) + LTRIM(STR(::nF-1)) )
          EndIf
-         ::oRpt:Say( ::nF, ::nC  , aGT[nF,nC] )
-         ::oRpt:Say( ::nF, ::nC+1, aGT[nF,nC+1] )
+         ::oRpt:Say( ::nF, ::nC  , ::aGT[nF,nC] )
+         ::oRpt:Say( ::nF, ::nC+1, ::aGT[nF,nC+2] )
          If nF >= 14
             ::oRpt:CellFormat( ::nF, ::nC,,,"####.##" )
          EndIf
@@ -1078,35 +1067,25 @@ METHOD Armo( aVT,nF,nC ) CLASS TLVentas
    LOCAL cVal := "", cPict
    DEFAULT nC := 1
 If aVT == NIL
-   cVal := TRIM(oApl:oEmp:LOCALIZ)
-   If !IsAlpha( RIGHT( cVal,1 ) )
-      nF := RAT( "-",oApl:oEmp:NOMBRE )
-      cVal := ALLTRIM(SUBSTR( oApl:oEmp:NOMBRE,nF+1 ))
-   EndIf
-   If ::aLS[11] == 1
-      cVal := PADC( cVal,30,"_" )
-   EndIf
+  // Calcular el Porcentaje de los Totales Generales
+   FOR nF := 1 TO ::aLS[12]
+      FOR nC := 1 TO 12 STEP 3
+         If nF <= 7
+            ::aGT[nF,nC+1] := ROUND(::aGT[nF,nC+2] /::aGT[09,nC+2]* 100,2 )
+         ElseIf nF >= 15
+            ::aGT[nF,nC+1] := ROUND(::aGT[nF,nC+2] /::aGT[12,nC+2]* 100,2 )
+         EndIf
+      NEXT nC
+   NEXT nF
 Else
-   If nF <= 7
-      cVal := ROUND( aVT[nF,nC+1]/aVT[9,nC+1]*100,2 )
-      cPict:= TRANSFORM( aVT[nF,nC],"@Z 999,999" ) +;
-              TRANSFORM( cVal      ,"@Z 999.99%" )
-   ElseIf nF >= 15
-      cPict:= SPACE(7) + TRANSFORM( aVT[nF,nC],"@Z 999.99%" )
-   Else
-      cPict:= SPACE(14)
-   EndIf
-   cVal := cPict + TRANSFORM( aVT[nF,nC+1]," 999,999,999,999" ) + "  "
-/*
-   cPict:= If( nF < 14, "@Z 999,999", "999.99%" )
-   cVal += TRANSFORM( aVT[nF,nC]  ,cPict ) + " " +;
-           TRANSFORM( aVT[nF,nC+1],"999,999,999,999" ) + "  "
-*/
+   cVal := TRANSFORM( aVT[nF,nC]  ,"@Z 999,999" ) +;
+           TRANSFORM( aVT[nF,nC+1],"@Z 999.99%" ) +;
+           TRANSFORM( aVT[nF,nC+2]," 999,999,999,999" ) + "  "
 EndIf
 RETURN cVal
 
 //------------------------------------//
-METHOD LaserRes( aGT,aVT ) CLASS TLVentas
+METHOD LaserRes( aVT ) CLASS TLVentas
    LOCAL nF, nL := 1, nC := 6
  ::aEnc := { .t.,"RESUMEN DE VENTAS OPTICAS DEL GRUPO",;
              "DESDE "+NtChr( ::aLS[1],"2" )+ " HASTA " + NtChr( ::aLS[2],"2" ),;
@@ -1146,6 +1125,7 @@ EndDo
       ::nLinea := { 3.0,11.0,3.0 }[ nL+1 ]
    EndIf
    ::Saltar( @nC,@nL,7 )
+   ::aLS[13] := ::Armo()
    UTILPRN ::oUtil Self:nLinea,10.0 SAY PADC( "TOTAL GENERAL" ,29,"-" ) FONT ::aFnt[6] RIGHT
    UTILPRN ::oUtil Self:nLinea,15.5 SAY PADC( "TOTAL C.O.C."  ,29,"-" ) FONT ::aFnt[6] RIGHT
    UTILPRN ::oUtil Self:nLinea,21.0 SAY PADC( "TOTAL GERDTS"  ,29,"-" ) FONT ::aFnt[6] RIGHT
@@ -1154,11 +1134,6 @@ EndDo
 FOR nF := 1 TO ::aLS[12]
       UTILPRN ::oUtil Self:nLinea,01.2   SAY ::aLV[nF]
    FOR nL := 1 TO 12 STEP 3
-      If nF <= 7
-         ::aGT[nF,nL+1] := ROUND(::aGT[nF,nL+2] /::aGT[09,nL+2]* 100,2 )
-      ElseIf nF >= 15
-         ::aGT[nF,nL+1] := ROUND(::aGT[nF,nL+2] /::aGT[12,nL+2]* 100,2 )
-      EndIf
       UTILPRN ::oUtil Self:nLinea,nC     SAY TRANSFORM(::aGT[nF,nL]  , "@Z 999,999" )     RIGHT
       UTILPRN ::oUtil Self:nLinea,nC+1.4 SAY TRANSFORM(::aGT[nF,nL+1], "@Z 999.99%" )     RIGHT
       UTILPRN ::oUtil Self:nLinea,nC+4.0 SAY TRANSFORM(::aGT[nF,nL+2],"999,999,999,999" ) RIGHT
@@ -1326,12 +1301,13 @@ If aVT == NIL
 Else
    nF := ::nF
 //Say( nRow, nCol, xValue, cFont, nSize, lBold, lItalic, lUnderLine, nAlign, nColor, nFondo, nOrien, nStyle, cFormat )
-      ::oRpt:Say( nF-1, ::nC, ::Armo(),,,,,, 7 )
+      ::oRpt:Say( nF-1, ::nC, ::aLS[13],,,,,, 7 )
       ::oRpt:Combinar( CHR( ::nC+64 ) + LTRIM(STR(nF-1)) + ":" +;
                        CHR( ::nC+65 ) + LTRIM(STR(nF-1)) )
    FOR nC := 1 TO ::aLS[12]
       ::oRpt:Say( nF, ::nC  , aVT[nC,1] )
-      ::oRpt:Say( nF, ::nC+1, aVT[nC,2] )
+      ::oRpt:Say( nF, ::nC+1, aVT[nC,3] )
+    //::oRpt:Say( nF, ::nC+1, aVT[nC,3] ,,, .f.,,,,,,,, "#.##0,00" )
       If nC >= 14
          ::oRpt:CellFormat( nF, ::nC,,,"####.##" )
       EndIf
