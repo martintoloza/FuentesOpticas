@@ -142,10 +142,21 @@ cQry := "SELECT d.fechad, d.documen, d.cantidad, d.pcosto, e.localiz "+;
          " AND d.codigo  = " + xValToChar( aLS[1] )    +;
          " AND d.fechad >= " + xValToChar( aLS[2] )    +;
          " AND d.fechad <= " + xValToChar( aLS[3] )    +;
+         " AND d.indica <> 'B'"                        +;
+         " AND d.causadev = 10"
+Lineas( cQry,@aExt,oRpt,"GARANTIA PROVEEDOR",4,1 )
+
+cQry := "SELECT d.fechad, d.documen, d.cantidad, d.pcosto, e.localiz "+;
+        "FROM cadempre e, caddevod d "                 +;
+        "WHERE d.optica  = e.optica"                   +;
+         " AND d.destino = "+ LTRIM(STR(oApl:nEmpresa))+;
+         " AND d.codigo  = " + xValToChar( aLS[1] )    +;
+         " AND d.fechad >= " + xValToChar( aLS[2] )    +;
+         " AND d.fechad <= " + xValToChar( aLS[3] )    +;
          " AND d.optica <> d.destino"                  +;
          " AND d.indica <> 'B'"                        +;
          " AND d.causadev "                            +;
-           If( oApl:nEmpresa == 0, "IN(2,3)", "= 4" )
+           If( oApl:nEmpresa == 0, "IN(2, 3)", "= 4" )
 Lineas( cQry,@aExt,oRpt,"T R A S L A D O S",4,1 )
 
 cQry := "SELECT d.fechad, d.documen, d.cantidad, d.pcosto, d.causadev, e.localiz "+;
@@ -155,8 +166,7 @@ cQry := "SELECT d.fechad, d.documen, d.cantidad, d.pcosto, d.causadev, e.localiz
          " AND d.codigo = "  + xValToChar( aLS[1] )   +;
          " AND d.fechad >= " + xValToChar( aLS[2] )   +;
          " AND d.fechad <= " + xValToChar( aLS[3] )   +;
-         " AND d.causadev NOT IN(6, 7) AND d.indica <> 'B'"
-//         " AND d.causadev <= 5 AND d.indica <> 'B'"
+         " AND d.causadev NOT IN(6, 7, 10) AND d.indica <> 'B'"
 Lineas( cQry,@aExt,oRpt,"D E V O L U C I O N E S",5,-1 )
 If oApl:nEmpresa > 0
    If aLS[2] <= CTOD("09.04.2007")
@@ -180,7 +190,7 @@ If oApl:nEmpresa > 0
             " AND codigo = "  + xValToChar( aLS[1] )      +;
             " AND fechad >= " + xValToChar( aLS[2] )      +;
             " AND fechad <= " + xValToChar( aLS[3] )      +;
-            " AND causadev IN(6, 7) AND indica <> 'B'"    +;
+            " AND causadev IN(6, 7, 10) AND indica <> 'B'"+;
            " UNION ALL "                                  +;
            "SELECT c.fecha, CONCAT('N.C.',c.numero), "    +;
                   "d.cantidad, d.pcosto, c.numfac "       +;
@@ -259,7 +269,7 @@ Case nX == 6 .AND. nV == 0
 Case nX == 6
    bExt := {|| cQry := "Fac."+STR(aRes[5],7) }
 EndCase
-
+MsgInfo( cQry,cTit )
 //nSec := Seconds()
 hRes := If( MSQuery( oApl:oMySql:hConnect,cQry ) ,;
             MSStoreResult( oApl:oMySql:hConnect ), 0 )

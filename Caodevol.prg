@@ -292,7 +292,7 @@ METHOD Articulo( lOk,aEd ) CLASS TDevol
 If lExiste
    aEd[2] := If( oApl:oInv:MONEDA == "C", "CONSIGNACION",;
              If( oApl:oInv:COMPRA_D, "C.DIRECTA", "" ))
-   If oApl:oInv:GRUPO == "1"
+   If oApl:oInv:GRUPO == "1" .AND. ::oDvd:CAUSADEV # 9
       If aEd[5] .AND. lOk
          ::oDvd:NUMREP  := oApl:oInv:FACTUVEN
       EndIf
@@ -306,12 +306,24 @@ If lExiste
       Else
          oApl:aInvme[1] := 1
       EndIf
-      If oApl:aInvme[1] <= 0
+      cMens := ArrayValor( oApl:aOptic,STR(oApl:oInv:OPTICA,2) )
+      If ::oDvd:CAUSADEV == 10
+         If !oApl:oInv:COMPRA_D
+            MsgStop( "Solo se usa en Compra Directa",">>> GARANTIA <<<" )
+            lExiste := .f.
+         ElseIf oApl:oInv:OPTICA # oApl:nEmpresa
+            MsgStop( "Montura esta en "+cMens,::oDvd:CODIGO )
+            lExiste := .f.
+         ElseIf oApl:aInvme[1] >= 1
+            MsgStop( "hacer Garantia con Existencia",">> NO PUEDO <<" )
+            lExiste := .f.
+         EndIf
+      ElseIf oApl:aInvme[1] <= 0
          MsgStop( "hacer Devolución sin Existencia",">> NO PUEDO <<" )
          lExiste := .f.
       ElseIf ::SiNo( lOk )
          cMens := {"Activa","Vendida","Devuelta"}[AT(oApl:oInv:SITUACION,"EVD")] +;
-                   " en " + ArrayValor( oApl:aOptic,STR(oApl:oInv:OPTICA,2) )
+                   " en " + cMens
          If oApl:lEnLinea .AND. !(::aCau[::oDvd:CAUSADEV,2] == 7 .AND. oApl:oInv:SITUACION == "V" .AND. lOk)
             MsgStop( cMens,"Montura esta" )
             lExiste := .f.
@@ -363,6 +375,9 @@ If oApl:oInv:GRUPO == "6" .OR.;
 Else
    ::oDvd:PCOSTO := oApl:oInv:PCOSTO
 EndIf
+If ::oDvd:CAUSADEV == 2 .AND. oApl:oInv:GRUPO == "1" .AND. oApl:oInv:COMPRA_D
+   ::oDvd:CAUSADEV := 8
+EndIf
 lSi := !::SiNo( lNew )
 If lNew
    ::oDvd:OPTICA  := oApl:nEmpresa
@@ -407,7 +422,8 @@ If nCanti # 0 .AND. LEFT( cCodi,2 ) # "05"
       aDV[3] := If( nCDev # 4 .AND. (oApl:oInv:COMPRA_D .OR. nCDev == 3 .OR.;
                                      oApl:oInv:MONEDA == "C"), .t., .f. )
       If nCanti > 0
-         aDV[4] := If( nCDev == 4, "E", If( aDV[2], "V", "D" ) )
+         aDV[4] := If( Rango( nCDev,4,10 ), "E", If( aDV[2], "V", "D" ) )
+       //aDV[4] := If( nCDev == 4, "E", If( aDV[2], "V", "D" ) )
          aDV[5] := ::oDvc:DOCUMEN
          aDV[6] := ::oDvc:FECHAD
          aDV[7] := ::oDvc:DESPUB
@@ -415,8 +431,13 @@ If nCanti # 0 .AND. LEFT( cCodi,2 ) # "05"
       If Rango( nCDev,6,7 )
          FVenta( ::oDvd:NUMREP,cCodi,nCanti,::oDvc:FECHAD,nCDev )
       ElseIf oApl:nEmpresa == 0 .OR. aDV[2] .OR. aDV[3]
-         oApl:oInv:SITUACION := aDV[4] ; oApl:oInv:FACTUVEN  := aDV[5]
-         oApl:oInv:FECVENTA  := aDV[6] ; oApl:oInv:Update( .f.,1 )
+         If nCDev == 10
+            oApl:oInv:NUMREPOS := aDV[5]       ; oApl:oInv:FECREPOS := aDV[6]
+            oApl:oInv:FACTUVEN := 0            ; oApl:oInv:FECVENTA := CTOD("")
+         Else
+            oApl:oInv:FACTUVEN := aDV[5]       ; oApl:oInv:FECVENTA := aDV[6]
+         EndIf
+           oApl:oInv:SITUACION := aDV[4]       ; oApl:oInv:Update( .f.,1 )
       ElseIf oApl:oInv:OPTICA == nOpt .AND. lSi
          If nCanti > 0
             oApl:oInv:OPTICA   := ::oDvd:DESTINO
@@ -468,7 +489,8 @@ Else
          EndIf
       EndIf
    Else
-      ::oDvd:DESTINO := If( ::oDvd:CAUSADEV # 4, 0, ::aGrp[nGrup,2] )
+      ::oDvd:DESTINO := If( ::oDvd:CAUSADEV == 10, oApl:nEmpresa,;
+                        If( ::oDvd:CAUSADEV  #  4, 0, ::aGrp[nGrup,2] ) )
    EndIf
 EndIf
 RETURN NIL

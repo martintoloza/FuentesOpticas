@@ -427,6 +427,7 @@ STATIC PROCEDURE Detalle( aRS,cQry,nDol,nF )
 hRes := If( MSQuery( oApl:oMySql:hConnect,cQry ) ,;
             MSStoreResult( oApl:oMySql:hConnect ), 0 )
 nL   := MSNumRows( hRes )
+//MsgInfo( cQry,STR(nL) )
 While nL > 0
    aRes := MyReadRow( hRes )
    AEVAL( aRes, { | xV,nP | aRes[nP] := MyClReadCol( hRes,nP ) } )

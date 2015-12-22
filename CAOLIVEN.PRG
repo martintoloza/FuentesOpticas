@@ -1095,7 +1095,7 @@ METHOD LaserRes( aVT ) CLASS TLVentas
    PAGE
 While !oApl:oEmp:Eof()
    ::DatosRes( @aVT )
-   If aVT[12,3] > 0
+   If aVT[12,3] # 0
       ::Saltar( @nC,@nL,25 )
       FOR nF := 1 TO ::aLS[12]
          If ::nLinea == ::aEnc[ nL+3 ]

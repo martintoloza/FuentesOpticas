@@ -115,11 +115,12 @@ CLASS TArqueo FROM TIMPRIME
 
  DATA aLS, oArq
 
- METHOD NEW() Constructor
+ METHOD NEW( nX ) Constructor
  METHOD ArqueHis()
  METHOD Arqueos()
  METHOD Buscar( oAr )
  METHOD ActuArque( oDlg )
+ METHOD DePlano( aDBF,sCel )
  METHOD ListoArq( oDlg )
  METHOD LaserArq( cQry,oDlg )
  METHOD ListoCod()
@@ -128,12 +129,22 @@ CLASS TArqueo FROM TIMPRIME
 ENDCLASS
 
 //------------------------------------//
-METHOD New() CLASS TArqueo
-
- ::aLS  := { "   ",NtChr( DATE(),"1" ),oApl:nEmpresa,TInv(), }
- ::oArq := oApl:Abrir( "cadarque","optica, codigo, anomes",.t.,,50 )
- ::aLS[4]:New( ,.f. )
-
+METHOD NEW( nX ) CLASS TArqueo
+If nX == NIL
+   ::aLS  := { "   ",NtChr( DATE(),"1" ),oApl:nEmpresa,TInv(), }
+   ::oArq := oApl:Abrir( "cadarque","optica, codigo, anomes",.t.,,50 )
+   ::aLS[4]:New( ,.f. )
+Else
+  ::aEnc:= { .t., oApl:cEmpresa, oApl:oEmp:Nit,;
+             "ARQUEO FISICO DEL INVENTARIO DE ","EN "+NtChr( NtChr( ::aLS[1],"F" ),"6" ),;
+             { .F., 0.5,"","C O D I G O" }    , { .F., 2.4,"","D E S C R I P C I O N" } ,;
+             { .T., 7.2,"Saldo"  ,"Anterior" }, { .T., 8.4,"Total"  ,"Entradas" },;
+             { .T., 9.6,"Total"  ,"Ventas" }  , { .T.,10.8,"Devoluc","Entrada" } ,;
+             { .T.,12.0,"Devoluc","Salida" }  , { .T.,13.2,"Ajuste" ,"Entrada" } ,;
+             { .T.,14.4,"Ajuste" ,"Salida" }  , { .T.,15.6,"Devoluc","Cliente" } ,;
+             { .T.,16.9,"Saldo"  ,"Actual" }  , { .T.,18.2,"Arqueo" ,"Fisico" }  ,;
+             { .T.,19.5,"","Faltante" }       , { .T.,20.8,"","Sobrante" } }
+EndIf
 RETURN NIL
 
 //------------------------------------//
@@ -339,21 +350,92 @@ ElseIf oApl:nTFor == 1
    oArq:End()
    aDBF := {"DBF"}
 Else
+   aDBF := { .F.,"",0,0,0,0,0,0,0,0,0,0,0,0,0,0 }
+   ::aLS[2] := NtChr( DATE(),"1" )
+   ::NEW( 1 )
+   Tem->(dbSkip( 3 ))
+   // Titulo
+   ::aEnc[4] := ALLTRIM( LEFT( Tem->CEL,64 ) )
+   Tem->(dbSkip())
+   // Periodo
+   ::aEnc[5] := ALLTRIM( LEFT( Tem->CEL,64 ) )
    ::Init( "ARQUEO FISICO", .f. ,, !::aLS[4] ,,, ::aLS[4], 5 )
-   ::aEnc   := { .t. }
-   ::nLinea := 0.60
-    PAGE
+   ::nMD := 20.8
+   DEFINE FONT ::aFnt[5] NAME ::cFont SIZE 0,-7  OF ::oPrn
+   PAGE
    While !Tem->(EOF())
-      ::aEnc[1] := ::Separator( 0.40 )
-      UTILPRN ::oUtil Self:nLinea, 00 SAY SUBSTR(Tem->CEL,2)
+      ::DePlano( @aDBF,Tem->CEL )
+      If aDBF[01]
+         ::Cabecera( .t.,0.42 )
+         If LEFT( aDBF[02],4 ) # "REPO"
+            UTILPRN ::oUtil Self:nLinea, 0.5 SAY aDBF[02]
+            UTILPRN ::oUtil Self:nLinea, 2.4 SAY aDBF[03]
+            UTILPRN ::oUtil Self:nLinea, 7.2 SAY TRANSFORM(aDBF[04],   "99,999") RIGHT
+            UTILPRN ::oUtil Self:nLinea, 8.4 SAY TRANSFORM(aDBF[05],"@Z 99,999") RIGHT
+            UTILPRN ::oUtil Self:nLinea, 9.6 SAY TRANSFORM(aDBF[06],"@Z 99,999") RIGHT
+            UTILPRN ::oUtil Self:nLinea,10.8 SAY TRANSFORM(aDBF[07],"@Z 99,999") RIGHT
+            UTILPRN ::oUtil Self:nLinea,12.0 SAY TRANSFORM(aDBF[08],"@Z 99,999") RIGHT
+            UTILPRN ::oUtil Self:nLinea,13.2 SAY TRANSFORM(aDBF[09],"@Z 99,999") RIGHT
+            UTILPRN ::oUtil Self:nLinea,14.4 SAY TRANSFORM(aDBF[10],"@Z 99,999") RIGHT
+            UTILPRN ::oUtil Self:nLinea,15.6 SAY TRANSFORM(aDBF[11],"@Z 99,999") RIGHT
+            UTILPRN ::oUtil Self:nLinea,16.9 SAY TRANSFORM(aDBF[12],   "99,999") RIGHT
+            UTILPRN ::oUtil Self:nLinea,18.2 SAY TRANSFORM(aDBF[13],   "99,999") RIGHT
+            UTILPRN ::oUtil Self:nLinea,19.5 SAY TRANSFORM(aDBF[14],"@Z 99,999") RIGHT
+            UTILPRN ::oUtil Self:nLinea,20.8 SAY TRANSFORM(aDBF[15],"@Z 99,999") RIGHT
+            aDBF[16] ++
+         Else
+            UTILPRN ::oUtil Self:nLinea, 0.8 SAY aDBF[02]
+            UTILPRN ::oUtil Self:nLinea, 5.0 SAY aDBF[03]
+         EndIf
+      EndIf
       Tem->(dbSkip())
    EndDo
+   If aDBF[16] > 0
+      ::Cabecera( .t.,0.3,0.45,20.8 )
+      UTILPRN ::oUtil Self:nLinea, 3.0 SAY "T O T A L E S ======>"
+      UTILPRN ::oUtil Self:nLinea, 7.2 SAY TRANSFORM(aDBF[04],"99,999") RIGHT
+      UTILPRN ::oUtil Self:nLinea,16.9 SAY TRANSFORM(aDBF[12],"99,999") RIGHT
+      UTILPRN ::oUtil Self:nLinea,18.2 SAY TRANSFORM(aDBF[13],"99,999") RIGHT
+      UTILPRN ::oUtil Self:nLinea,19.5 SAY TRANSFORM(aDBF[14],"99,999") RIGHT
+      UTILPRN ::oUtil Self:nLinea,20.8 SAY TRANSFORM(aDBF[15],"99,999") RIGHT
+   EndIf
     ENDPAGE
    ::EndInit( .F. )
    aDBF := {"DBF"}
 EndIf
 Tem->(dbCloseArea())
 BorraFile( "ARQUEO",aDBF,cRuta )
+RETURN NIL
+
+//------------------------------------//
+METHOD DePlano( aDBF,sCel ) CLASS TArqueo
+   aDBF[01] := .f.
+If SUBSTR( sCel, 3,2 ) == "01" .OR.;
+   SUBSTR( sCel, 3,2 ) == "03" .OR.;
+   SUBSTR( sCel, 3,2 ) == "04" .OR.;
+   SUBSTR( sCel, 3,1 ) == "6"  .OR.;
+   SUBSTR( sCel,18,7 ) == "TOTALES"
+   aDBF[02] :=          SUBSTR( sCel, 03,12 )
+   aDBF[03] := ALLTRIM( SUBSTR( sCel, 15,26 ) )
+   aDBF[01] := If( aDBF[03] == "TOTALES", .f., .t. )
+   aDBF[04] :=     VAL( SUBSTR( sCel, 42,06 ) )
+   aDBF[05] :=     VAL( SUBSTR( sCel, 50,06 ) )
+   aDBF[06] :=     VAL( SUBSTR( sCel, 58,06 ) )
+   aDBF[07] :=     VAL( SUBSTR( sCel, 66,06 ) )
+   aDBF[08] :=     VAL( SUBSTR( sCel, 74,06 ) )
+   aDBF[09] :=     VAL( SUBSTR( sCel, 82,06 ) )
+   aDBF[10] :=     VAL( SUBSTR( sCel, 90,06 ) )
+   aDBF[11] :=     VAL( SUBSTR( sCel, 98,06 ) )
+   aDBF[12] :=     VAL( SUBSTR( sCel,106,07 ) )
+   aDBF[13] :=     VAL( SUBSTR( sCel,115,06 ) )
+   aDBF[14] :=     VAL( SUBSTR( sCel,123,07 ) )
+   aDBF[15] :=     VAL( SUBSTR( sCel,132,07 ) )
+   //MsgInfo( aDBF[02] )
+ElseIf SUBSTR( sCel, 3,4 ) == "REPO"
+   aDBF[01] := .t.
+   aDBF[02] :=      SUBSTR( sCel, 03,27 )
+   aDBF[03] :=      SUBSTR( sCel, 31,32 )
+EndIf
 RETURN NIL
 
 //------------------------------------//
@@ -497,15 +579,7 @@ hRes := ::Memo( 1,cQry )
 nL   := MSNumRows( hRes )
  ::aLS[6] := "Por Favor Espere Mientras Comparo" + STR(nL)
 oDlg:Update()
- ::aEnc := { .t., oApl:cEmpresa, oApl:oEmp:Nit,;
-             "ARQUEO FISICO DEL INVENTARIO DE ","EN "+NtChr( NtChr( ::aLS[1],"F" ),"6" ),;
-             { .F., 0.5,"","C O D I G O" }    , { .F., 2.4,"","D E S C R I P C I O N" } ,;
-             { .T., 7.2,"Saldo"  ,"Anterior" }, { .T., 8.4,"Total"  ,"Entradas" },;
-             { .T., 9.6,"Total"  ,"Ventas" }  , { .T.,10.8,"Devoluc","Entrada" } ,;
-             { .T.,12.0,"Devoluc","Salida" }  , { .T.,13.2,"Ajuste" ,"Entrada" } ,;
-             { .T.,14.4,"Ajuste" ,"Salida" }  , { .T.,15.6,"Devoluc","Cliente" } ,;
-             { .T.,16.9,"Saldo"  ,"Actual" }  , { .T.,18.2,"Arqueo" ,"Fisico" }  ,;
-             { .T.,19.5,"","Faltante" }       , { .T.,20.8,"","Sobrante" } }
+ ::NEW( 1 )
  ::aEnc[4] += {"MONTURAS","LIQUIDOS","ACCESORIOS","L.CONTACTO"}[::aLS[2]]
  ::Init( ::aEnc[4], .f. ,, !::aLS[4] ,,, ::aLS[4], 5 )
  ::nMD := 20.8
