@@ -1668,7 +1668,8 @@ ElseIf LEN( aGT ) > 0
       ::aMV[nE,9] := "001"
    EndIf
    //Aqui Duplico los registros para las NIIF
-   If oApl:oEmp:NIIF .AND. ::aMV[1,5] >= "201501"
+   //If oApl:oEmp:NIIF .AND. ::aMV[1,5] >= "201501"
+   If !EMPTY(oApl:oEmp:NIIF) .AND. ::aMV[1,1] >= oApl:oEmp:NIIF
       If ::aDC == NIL .OR. LEN( ::aDC ) == 0
          aD := { 0,0 }
       Else

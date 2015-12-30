@@ -269,7 +269,7 @@ Case nX == 6 .AND. nV == 0
 Case nX == 6
    bExt := {|| cQry := "Fac."+STR(aRes[5],7) }
 EndCase
-MsgInfo( cQry,cTit )
+//MsgInfo( cQry,cTit )
 //nSec := Seconds()
 hRes := If( MSQuery( oApl:oMySql:hConnect,cQry ) ,;
             MSStoreResult( oApl:oMySql:hConnect ), 0 )

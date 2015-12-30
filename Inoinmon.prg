@@ -84,7 +84,7 @@ DEFINE DIALOG oM:oDlg FROM 0, 0 TO 370, 580 PIXEL;
    @ 27,146 BUTTON oGet[12] PROMPT "Dscto Condicionado" SIZE 52,12 OF oM:oDlg;
       ACTION ( oGet[12]:Disable(), oM:Dsctos( oLbx,oM:oMtc:ROW_ID ),;
                oGet[12]:Enable() , oGet[12]:oJump := oLbx );
-      WHEN oApl:oEmp:NIIF PIXEL
+      WHEN !EMPTY(oApl:oEmp:NIIF) .AND. oM:oMtc:FECINGRE >= oApl:oEmp:NIIF PIXEL
    @ 76,210 SAY "Total Monturas " + TRANSFORM( oM:oMtc:CONTROL,"999,999" );
       OF oM:oDlg PIXEL SIZE 76,10 UPDATE COLOR nRGB( 255,0,0 )
    @ 52.0,06 BROWSE oLbd SIZE 110,40 PIXEL OF oM:oDlg CELLED;

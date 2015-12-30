@@ -103,8 +103,10 @@ EndIf
 aGT  := { 0,0,0,0,0,"","","s.codigo"  }
 If oApl:nEmpresa == 0 .OR. aLS[8] == "S"
    aLS[8] := {|| aRes[12]+ " " +DTOC(aRes[13]) }
-   aGT[8] := "n.nombre, s.codigo"
    cQry   := "i.factupro, i.fecrecep "
+   If aLS[9] == 1
+      aGT[8] := "n.nombre, s.codigo"
+   EndIf
 Else
    aLS[8] := {|| STR(aRes[12],6)+ " " +DTOC(aRes[13]) }
    cQry   := "i.numrepos, " + If( aLS[9] == 1, "i.fecrepos ", "s.fec_ulte " )

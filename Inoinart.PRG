@@ -67,7 +67,8 @@ DEFINE DIALOG oC:oDlg FROM 0, 0 TO 370, 580 PIXEL;
    @ 64,122 BUTTON oGet[8] PROMPT "Dscto Condicionado" SIZE 52,12 OF oC:oDlg;
       ACTION ( oGet[8]:Disable(), oC:Dsctos( oLbd,oC:oArc:ROW_ID ),;
                oGet[8]:Enable() , oGet[8]:oJump := oLbd );
-      WHEN oApl:oEmp:NIIF PIXEL
+      WHEN !EMPTY(oApl:oEmp:NIIF) .AND. oC:oArc:FECINGRE >= oApl:oEmp:NIIF PIXEL
+   // WHEN oApl:oEmp:NIIF PIXEL
    @ 64,194 SAY "SubTotal"    OF oC:oDlg RIGHT PIXEL SIZE 40,10
    @ 64,236 SAY oC:nSub OF oC:oDlg PICTURE "999,999,999.99" PIXEL SIZE 42,10;
       UPDATE COLOR nRGB( 255,0,128 )
