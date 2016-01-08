@@ -433,14 +433,15 @@ While nL > 0
    AEVAL( aRes, { | xV,nP | aRes[nP] := MyClReadCol( hRes,nP ) } )
    If !LEFT(aRes[1],2) $ "02  05"
       nC    := LeerGrupo( aRes[1] )
-      If nF == 4
+      If nF == 4 .AND. aRes[5] # 10
          If (aRes[5] == 3 .AND. oApl:nEmpresa == 0 .AND. nC == 1) .OR.;
            !(aRes[5] == 4  .OR. oApl:nEmpresa == 0)
              aRes[2] := 0
          EndIf
       ElseIf nF == 7
          nDC := If( Rango( aRes[5],6,7 ), 2, 0 )
-         If aRes[5] == 6 .AND. oApl:nEmpresa  # aRes[6]
+         If aRes[5] == 10 .OR.;
+           (aRes[5] ==  6 .AND. oApl:nEmpresa  # aRes[6])
             aRes[2] := 0
          EndIf
       EndIf

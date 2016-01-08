@@ -630,7 +630,9 @@ While nL > 0
    If LEN( aRes[1] ) >= 10
       AEVAL( aRes, { | xV,nP | aRes[nP] := MyClReadCol( hRes,nP ) } )
       oTB:Seek( {"codigo",aRes[1]} )
-      If aRes[3] == 2
+      If aRes[3] == 1
+         oTB:ENTRADAS += aRes[2]
+      ElseIf aRes[3] == 2
          oTB:SALIDAS  += aRes[2]
       ElseIf aRes[3] == 4
          oTB:DEVOL_S  += aRes[2]

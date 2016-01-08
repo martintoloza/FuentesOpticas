@@ -10,7 +10,7 @@ FUNCTION CaoPagos( lPago,lNuevo,aPag )
    LOCAL bGrabar, bSumar, bValid, nFPag, nFactu, nPago := 0
 DEFAULT lPago := .f., lNuevo := .t. ,;
         aPag  := ArrayCombo( "FPAGO" )
-aP := { oApl:dFec,"","","99,999,999",.f.,0,.f.,0,0,0,0,0,0,0,0 }
+aP := { oApl:dFec,"","","999,999,999",.f.,0,.f.,0,0,0,0,0,0,0,0 }
 If lPago
    bGrabar := {|| GrabaPago( lNuevo,aP[6] )       ,;
                   aP[2] := oApl:oPag:NUMCHEQUE    ,;

@@ -45,9 +45,9 @@ Else
 EndIf
 oRpt := TDosPrint()
 oRpt:New( oApl:cPuerto,oApl:cImpres,{"MOVIMIENTO  DE  VENTAS",aRA,;
-          " C L I E N T E                    FECHA      FACTURA   LEN.OFTALMICO  "+;
-          " M O N T U R A   LENT.CONTACTO   ----CONSULTAS   -----LIQUIDOS   -----"+;
-          "VARIOS  Venta Bruta  --DESCUENTO  Venta Grava       I.V.A.  Valor Total"},;
+          " C L I E N T E                    FECHA      FACTURA   LEN.OFTALMICO  " +;
+          " M O N T U R A   LENT.CONTACTO   ----CONSULTAS   -----LIQUIDOS   ------"+;
+          "VARIOS  Venta Bruta  -DESCUENTO  Venta Grava       I.V.A.   Valor Total"},;
           aLS[3],aLS[5],2 )
 AEVAL( aLC, { |x| AFILL( x,0 ) } )
 AEVAL( aGT, { |x| AFILL( x,0 ) } )
@@ -149,7 +149,7 @@ While nL > 0
          aGT[1,nK] += aRA[6]
       EndIf
       If aLS[4] == "N"
-         oRpt:Titulo( 211 )
+         oRpt:Titulo( 212 )
          If oRpt:nPage > aLS[6]
             nK := 27
             EXIT
@@ -174,13 +174,13 @@ While nL > 0
                oRpt:Say( oRpt:nL,103,STR(aVT[1,04],2) )
                oRpt:Say( oRpt:nL,107,TRANSFORM(aVT[2,04], "9,999,999" ))
                oRpt:Say( oRpt:nL,119,STR(aVT[1,05],2) )
-               oRpt:Say( oRpt:nL,123,TRANSFORM(aVT[2,05], "9,999,999" ))
-               oRpt:Say( oRpt:nL,136,TRANSFORM(aVT[2,07],"99,999,999" ))
-               oRpt:Say( oRpt:nL,149,TRANSFORM(aVT[2,08],"99,999,999" ))
-               oRpt:Say( oRpt:nL,162,TRANSFORM(aVT[2,09],"99,999,999" ))
-               oRpt:Say( oRpt:nL,175,TRANSFORM(aVT[1,10],"99,999,999" ))
-               oRpt:Say( oRpt:nL,188,TRANSFORM(aVT[2,11],"99,999,999" ))
-               oRpt:Say( oRpt:nL,201,TRANSFORM(aVT[2,12],"99,999,999" ))
+               oRpt:Say( oRpt:nL,123,TRANSFORM(aVT[2,05],  "9,999,999" ))
+               oRpt:Say( oRpt:nL,136,TRANSFORM(aVT[2,07],"999,999,999" ))
+               oRpt:Say( oRpt:nL,149,TRANSFORM(aVT[2,08],"999,999,999" ))
+               oRpt:Say( oRpt:nL,162,TRANSFORM(aVT[2,09], "99,999,999" ))
+               oRpt:Say( oRpt:nL,175,TRANSFORM(aVT[1,10], "99,999,999" ))
+               oRpt:Say( oRpt:nL,188,TRANSFORM(aVT[2,11], "99,999,999" ))
+               oRpt:Say( oRpt:nL,201,TRANSFORM(aVT[2,12],"999,999,999" ))
             EndIf
          EndIf
          oRpt:nL ++
@@ -321,7 +321,7 @@ EndDo
 */
 If aLS[5] > 0 .AND. nK # 27
    If aLS[4] == "N"
-      oRpt:Say( oRpt:nL,0,REPLICATE("_",211) )
+      oRpt:Say( oRpt:nL,0,REPLICATE("_",212) )
       oRpt:NewPage()
       oRpt:nL := 67
    EndIf

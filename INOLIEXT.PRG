@@ -190,7 +190,7 @@ If oApl:nEmpresa > 0
             " AND codigo = "  + xValToChar( aLS[1] )      +;
             " AND fechad >= " + xValToChar( aLS[2] )      +;
             " AND fechad <= " + xValToChar( aLS[3] )      +;
-            " AND causadev IN(6, 7, 10) AND indica <> 'B'"+;
+            " AND causadev IN(6, 7) AND indica <> 'B'"    +;
            " UNION ALL "                                  +;
            "SELECT c.fecha, CONCAT('N.C.',c.numero), "    +;
                   "d.cantidad, d.pcosto, c.numfac "       +;

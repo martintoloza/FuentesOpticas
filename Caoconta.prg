@@ -554,7 +554,7 @@ While nL > 0
    If LEN( aGT ) == 0
       AADD( aGT, { aRes[2],"","","","",0,aCta[1,7],999,0,aCta[1,10] } )
    EndIf
-   If Rango( aRes[5],{ 2,3,8 } )
+   If Rango( aRes[5],{ 2,3,8,10 } )
       // Devolucion, Daño, Dev.Proveedor
       If aRes[8] .OR. aRes[9] == "C" .OR. aRes[5] == 8 .OR.;
         (aRes[5] == 2 .AND. oApl:nEmpresa == 0 .AND. aDV[2] == "03")
@@ -575,7 +575,7 @@ While nL > 0
           aDV[6]   := .t.
       EndIf
    EndIf
-   If Rango( aRes[5],{ 1,3,5,8 } ) .OR.;
+   If Rango( aRes[5],{ 1,3,5,8,10 } ) .OR.;
            ( aRes[5] == 2 .AND. lDev )
       // Cambio, Daño, Sin Costo, Devolucion de BOD u Opticas que no son COC
       If aRes[9] == "C"
@@ -586,14 +586,27 @@ While nL > 0
          EndIf
          aGT[nE-1,7] += aDV[5]
       ElseIf aDV[6]
-         If (nE := AscanX( aGT,aDV[4],aCta[2,6] )) == 0
-            AADD( aGT, {    aDV[4],aCta[2,2],"","","",aCta[2,6],0,0,aCta[2,6] } )
-            nE := LEN( aGT )
-         EndIf
-         aGT[nE  ,7] += aDV[5]
-         If (nE := AscanX( aGT,aCta[2,1],1 )) == 0
-            AADD( aGT, { aCta[2,1],"","","","",aCta[2,6],0,0,1 } )
-            nE := LEN( aGT )
+         If aRes[5] == 10
+            // GARANTIA PROVEEDOR
+            If (nE := AscanX( aGT,aCta[2,1],1 )) == 0
+               AADD( aGT, { aCta[2,1],"","","","",aCta[2,6],0,0,1 } )
+               nE := LEN( aGT )
+            EndIf
+            aGT[nE  ,7] += aDV[5]
+            If (nE := AscanX( aGT,aDV[4],aCta[2,6] )) == 0
+               AADD( aGT, {    aDV[4],aCta[2,2],"","","",aCta[2,6],0,0,aCta[2,6] } )
+               nE := LEN( aGT )
+            EndIf
+         Else
+            If (nE := AscanX( aGT,aDV[4],aCta[2,6] )) == 0
+               AADD( aGT, {    aDV[4],aCta[2,2],"","","",aCta[2,6],0,0,aCta[2,6] } )
+               nE := LEN( aGT )
+            EndIf
+            aGT[nE  ,7] += aDV[5]
+            If (nE := AscanX( aGT,aCta[2,1],1 )) == 0
+               AADD( aGT, { aCta[2,1],"","","","",aCta[2,6],0,0,1 } )
+               nE := LEN( aGT )
+            EndIf
          EndIf
        //MsgInfo( aGT[nE,1],"1.0-"+aRes[4]+STR(nE,5) )
       Else
@@ -1794,7 +1807,8 @@ aCG[4] := "INSERT INTO movto_d (CODIGO_EMP, ANO_MES, CONSECUTIVO, "+;
     EndIf
  NEXT nE
    //Aqui van los Descuentos Condicionados
-If oApl:oEmp:NIIF .AND. ::aDC # NIL .AND. LEN( ::aDC ) > 0
+If !EMPTY(oApl:oEmp:NIIF) .AND. ::aMV[1,1] >= oApl:oEmp:NIIF .AND.;
+   ::aDC # NIL .AND. LEN( ::aDC ) > 0
    cSql := "SELECT CONSECUTIVO FROM compras_des" + xFec +;
            " AND CONSECUTIVO = " + LTRIM(STR(nCtl))
    oMes := TDbOdbc()

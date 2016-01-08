@@ -842,8 +842,8 @@ While nL > 0
       EndIf
    ElseIf LEFT( aRes[1],5 ) == "05990"
       nC   := VAL( SUBSTR( aRes[1],10,1 ) )
-      aVD[6] := { "2","5","6" }[nC]
-      aVD[7] := { "02","9999","9999" }[nC]
+      aVD[6] := { "2","5","6","2" }[nC]
+      aVD[7] := { "02","9999","9999","0599" }[nC]
    Else
       aVD[7] += If( aVD[6] $ "134", "", SUBSTR( aRes[1],3,2 ) )
    EndIf
