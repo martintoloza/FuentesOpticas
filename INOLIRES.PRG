@@ -131,7 +131,21 @@ cQry := "SELECT d.codigo, d.cantidad, d.pcosto, 'X' "   +;
          " AND c.moneda  = 'X'"
 Detalle( @aRS,cQry,aLS[2],3 )
 // 6_Ventas
-If oApl:nEmpresa == 18 .OR. oApl:nEmpresa == 21
+   cQry := "SELECT v.codart, v.cantidad, v.pcosto, v.fecdev, i.moneda "+;
+           "FROM cadfactu c, cadventa v LEFT JOIN cadinven i"+;
+             " ON v.codart  = i.codigo "                     +;
+           "WHERE LEFT(v.codart,2) NOT IN('02','05')"        +;
+            " AND c.optica  = v.optica"                      +;
+            " AND c.numfac  = v.numfac"                      +;
+            " AND c.tipo    = v.tipo"                        +;
+            " AND c.optica  = [OPT]"                         +;
+            " AND c.fechoy >= " + xValToChar( aGT[1] )       +;
+            " AND c.fechoy <= " + xValToChar( aGT[2] )       +;
+            " AND c.tipo   <> 'Z'"
+If oApl:nEmpresa == 18
+   cQry := STRTRAN( cQry,"[OPT]","18" ) +;
+            " AND c.autoriza <> 'FOCA'"
+/*
    cQry := "SELECT v.codart, v.cantidad, v.pcosto, v.fecdev, i.moneda "+;
            "FROM cadfactu c, cadventa v LEFT JOIN cadinven i"+;
              " ON v.codart  = i.codigo "                     +;
@@ -144,14 +158,16 @@ If oApl:nEmpresa == 18 .OR. oApl:nEmpresa == 21
             " AND v.numfac  = c.numfac"                      +;
             " AND v.tipo    = c.tipo"                        +;
             " AND LEFT(v.codart,2) NOT IN('02','05')"
+*/
+ElseIf oApl:nEmpresa == 21
+   If aGT[1] >= CTOD("01.09.2015")
+      cQry := STRTRAN( cQry,"[OPT]","21" )
+   Else
+      cQry := STRTRAN( cQry,"[OPT]","18" ) +;
+               " AND c.autoriza = 'FOCA'"
+   EndIf
 Else
-   cQry := "SELECT v.codart, v.cantidad, v.pcosto, v.fecdev, i.moneda "  +;
-           "FROM cadventa v LEFT JOIN cadinven i ON v.codart = i.codigo "+;
-           "WHERE v.optica  = " + LTRIM(STR(oApl:nEmpresa)) +;
-            " AND v.fecfac >= " + xValToChar( aGT[1] )      +;
-            " AND v.fecfac <= " + xValToChar( aGT[2] )      +;
-            " AND v.tipo   <> 'Z'"                          +;
-            " AND LEFT(v.codart,2) NOT IN('02','05')"
+   cQry := STRTRAN( cQry,"[OPT]",LTRIM(STR(oApl:nEmpresa)) )
 EndIf
 hRes := If( MSQuery( oApl:oMySql:hConnect,cQry ) ,;
             MSStoreResult( oApl:oMySql:hConnect ), 0 )

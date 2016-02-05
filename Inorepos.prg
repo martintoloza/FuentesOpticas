@@ -80,6 +80,7 @@ If nP  # NIL
        AADD( ::aRep, { cCodigo,cO,0,0 } )
        nP := LEN( ::aRep )
    EndIf
+   ::aRep[nP,3] += nItem
    ::aRep[nP,4] += Tem->CANTIDAD
 ElseIf cCodigo == NIL
    xRut := AbrirFile( 4,,"INVTEM.DBF" )
@@ -531,7 +532,7 @@ FOR nCan := 1 TO Tem->CANTIDAD
    nCon ++
 NEXT nCan
    If aMon[2]
-      ::NEW( "Ing.",0,"",Tem->CANTIDAD )
+      ::NEW( "Mon.",0,"",Tem->CANTIDAD )
    EndIf
 RETURN NIL
 

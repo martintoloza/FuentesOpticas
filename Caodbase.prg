@@ -495,6 +495,20 @@ Case cTabla == "extracto"
                 { "debitos"   , "N", 13, 02, },;
                 { "creditos"  , "N", 13, 02, } }
    aIndice := { { "Fecha", "fechoy" } }
+Case cTabla == "fisicoc"
+   aStruct := { { "row_id"    , "N", 11, 00, " auto_increment PRIMARY KEY" },;
+                { "optica"    , "N", 02, 00, },;
+                { "anomes"    , "C", 06, 00, },;
+                { "vitrina"   , "C", 03, 00, },;
+                { "grupo"     , "C", 01, 00, },;
+                { "tvitrina"  , "N", 08, 00, } }
+   aIndice := { { "Vitrina", "optica, anomes, grupo, vitrina" } }
+Case cTabla == "fisicod"
+   aStruct := { { "row_id"    , "N", 11, 00, " auto_increment PRIMARY KEY" },;
+                { "fisicoc_id", "N", 11, 00, },;
+                { "codigo"    , "C", 12, 00, },;
+                { "cantidad"  , "N", 05, 00, } }
+   aIndice := { { "Vitrina", "fisicoc_id" } }
 Case cTabla == "INVTEM"        //DBF
    aStruct := { { "OPTICA"    , "N", 02, 00 },;
                 { "CODIGO"    , "C", 12, 00 },;

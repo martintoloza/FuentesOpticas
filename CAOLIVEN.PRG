@@ -678,6 +678,7 @@ While nL > 0
    EndIf
 EndDo
 MSFreeResult( hRes )
+/*
 cQry := "SELECT c.numero, c.fecha, d.codigo, d.precioven, c.codigo_nit, i.tipomontu "+;
         "FROM cadnotac c, cadnotad d LEFT JOIN cadinven i"+;
         " USING( codigo ) "                               +;
@@ -715,6 +716,7 @@ While nL > 0
    EndIf
 EndDo
 MSFreeResult( hRes )
+*/
 ASORT( aVT,,, { |x,y| x[7] < y[7] } )
 If ::aLS[11] == 1
    oRpt := TDosPrint()
@@ -725,6 +727,11 @@ If ::aLS[11] == 1
    cQry:= "9,999,999,999"
    nL  := 10
    FOR nG := 1 TO 15
+      If nG ==  6 .OR. nG == 13
+         // Devoluciones x NC
+         nL += 2
+         LOOP
+      EndIf
       If nG <= 13 .AND. nG # 7
          FOR nK := 1 TO 6
             If nG <= 6

@@ -100,7 +100,7 @@ If aLS[13]
       MsgInfo( "NO SE PUEDEN CREAR CODIGOS" ) ; RETURN
    EndIf
 EndIf
-aGT  := { 0,0,0,0,0,"","","s.codigo"  }
+aGT  := { 0,0,0,0,0,"","","s.codigo",64,0  }
 If oApl:nEmpresa == 0 .OR. aLS[8] == "S"
    aLS[8] := {|| aRes[12]+ " " +DTOC(aRes[13]) }
    cQry   := "i.factupro, i.fecrecep "
@@ -173,8 +173,14 @@ While nL > 0
    aGT[4] +=  aRes[10]
    aGT[5] += (aRes[11] * aRes[10])
    If aLS[13]
+      If aGT[9] == 64
+         aGT[9] := 0
+         cQry   := LTRIM(STR(++aGT[10]))
+      EndIf
+         aGT[9] ++
       Tem->(dbAppend())
       Tem->CODIGO := aRes[01]
+      Tem->VITRINA:= cQry
       Tem->VALOR  := TRANSFORM(aRes[11],"999,999,999")
    EndIf
    nL --
