@@ -66,10 +66,13 @@ DEFINE WINDOW oApl:oWnd FROM 1,1 TO 400,600 PIXEL  ;
          TOOLTIP "Compras de Monturas (Ctrl+M)"              ;
          ACTION InoInmon() GROUP
       DEFINE BUTTON OF oApl:oWnd:oBar NOBORDER ;
-         FILENAME oApl:cIco+"Database.bmp"     ;
-         ACTION oApl:UtilDB()                  ;
-         MESSAGE "Mantenimiento de la Base de Datos";
-         TOOLTIP "Mantenimiento de la Base de Datos"
+         FILENAME oApl:cIco+"FACE.bmp"         ;
+         ACTION InvFisico()                    ;
+         MESSAGE "Toma del Inventario Fisico"  ;
+         TOOLTIP "Toma del Inventario Fisico"
+      // ACTION oApl:UtilDB()                  ;
+      // MESSAGE "Mantenimiento de la Base de Datos";
+      // TOOLTIP "Mantenimiento de la Base de Datos"
 ACTIVATE WINDOW oApl:oWnd MAXIMIZED             ;
    ON INIT (If( oApl:lSalir, oApl:oWnd:End(), ));
    VALID If( oApl:lSalir, .t., Salir() )

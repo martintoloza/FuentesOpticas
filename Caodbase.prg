@@ -124,6 +124,11 @@ Case cTabla == "cadbanco"
                 { "en_espera" , "L", 01, 00, } }
    aIndice := { { "Codigo" , { "codigo" } },;
                 { "Nombre" , { "nombre" } } }
+Case cTabla == "cadcodig"
+   aStruct := { { "row_id"    , "N", 11, 00, " auto_increment PRIMARY KEY" },;
+                { "codbarra"  , "C", 12, 00, },;
+                { "codigo"    , "C", 12, 00, } }
+   aIndice := { { "Codigob", { "codbarra" } } }
 Case cTabla == "cadclien"
    aStruct := { { "row_id"    , "N", 11, 00, " auto_increment PRIMARY KEY" },;
                 { "codigo"    , "N", 12, 00, },;
@@ -677,11 +682,6 @@ Case cTabla == "historia"
    DEFINE INDEX CODIGO TAG Codigo PRIMARY
    DEFINE INDEX NOMBRE TAG Nombre
 //32
-Case cTabla == "cadcodig"
-   aStruct := { { "row_id"    , "N", 11, 00, " auto_increment PRIMARY KEY" },;
-                { "codbarra   , "C", 12, 00, },;
-                { "codigo     , "C", 12, 00, } }
-   aIndice := { { "Codigob", { "codbarra" } } }
 //02 NO PERMANECEN ABIERTOS
    DEFINE TABLE CADDEVOL ALIAS TDev  NORECYCLE CONVERT DOS
    aStruct := { { "row_id"    , "N", 11, 00, " auto_increment PRIMARY KEY" },;
