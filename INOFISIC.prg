@@ -93,7 +93,7 @@ ENDCLASS
 //------------------------------------//
 METHOD NEW( nX,cRut ) CLASS TFisico
 If nX == NIL
-   ::aLS  := { "   ",1,NtChr( DATE()-DAY(DATE()),"1" ),"   ",0,"",.t.,"1","",0 }
+   ::aLS  := { oApl:cLocal,1,NtChr( DATE()-DAY(DATE()),"1" ),"   ",0,"",.t.,"1","",0 }
    ::oArc := oApl:Abrir( "fisicoc","optica, anomes, vitrina",.t.,,50 )
    ::oArd := oApl:Abrir( "fisicod","fisicoc_id",,,100 )
    ::oArd:Seek( { "fisicoc_id",0 } )
@@ -311,12 +311,12 @@ EndIf
 cFile := "\" + CURDIR() + "\ARQUEO.TXT"
 FERASE( cFile )
 hFile := FCREATE( cFile,0 )
-aLS[1]:= STR(oApl:nEmpresa,10) + " " + aLS[2] + " 0"
-aLS[2]:= nL
+aLS[2]:= STR(oApl:nEmpresa,10) + " " + aLS[2] + " 0"
+aLS[3]:= nL
 While nL > 0
    aRes := MyReadRow( hRes )
    AEVAL( aRes, { | xV,nP | aRes[nP] := MyClReadCol( hRes,nP ) } )
-   cRegis := aLS[1] + aRes[1] + "   " + aRes[2] + " " +;
+   cRegis := aLS[2] + aRes[1] + "   " + aRes[2] + " " +;
                       aRes[3] +     STR(aRes[4],8)
    FWRITE( hFile, cRegis + CRLF )
    nL --
@@ -336,7 +336,7 @@ If LEFT(cDir,2) == "A:"
          Else
             COPY FILE &(cFile) TO A:ARQUEO.TXT
             FERASE("A:\Check.Ctr")
-            MsgInfo( "Arqueo con"+STR(aLS[2])+" Registros","Copia Hecha "+oApl:oEmp:LOCALIZ )
+            MsgInfo( "Arqueo con"+STR(aLS[3])+" Registros","Copia Hecha "+oApl:oEmp:LOCALIZ )
             EXIT
          EndIf
       EndDo

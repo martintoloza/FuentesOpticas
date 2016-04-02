@@ -1253,7 +1253,7 @@ DEFINE BUTTON RESOURCE "SALIR"   OF oBar NOBORDER TOOLTIP "Salir";
    ACTION oDlg:End()
 RETURN oBar
 
-//-Despliega cuadro Lentes Oftalmicos-//
+//-Despliega cuadro 0201 Oftalmicos-//
 METHOD Lentes( lOft,nA ) CLASS TFactura
    LOCAL bMate, bServ, oDlg, oLbx, oGet := ARRAY(18), lOk := .f.
    LOCAL aL, aLado, aTerm, aTipo, aTEmp, nLado, nMate, nTerm, nTipo
@@ -1273,7 +1273,7 @@ FOR nLado := 1 TO LEN( ::aV )
    EndIf
 NEXT nLado
 aTEmp := ACLONE( aTipo )
-aTerm := { {"Tallado"," "},{"Terminado","T"},{"Coquilla","C"} }
+aTerm := { {"Tallado"," "},{"Terminado","T"},{"Coquilla","C"},{"Coquilla B8","B"} }
 nLado := nMate := nTerm := nTipo := 1
 AEVAL( ::aSrv, { | e | e[ 1 ] := 2 } )
 

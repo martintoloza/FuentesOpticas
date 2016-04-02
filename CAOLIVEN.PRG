@@ -666,6 +666,9 @@ aVT := { {0,0,0,0,0,0, 1,"Monturas de Sol c/U.V."   },{0,0,0,0,0,0, 2,"Monturas 
 While nL > 0
    nG := GrupoIca( aRes[2],aRes[9],aV[3] )
    aV[2] := If( aRes[4] $ "AD" .AND. aRes[5] <= ::aLS[2], 0, 1 )
+   If nG < 1 .OR. nG > 15
+      MsgInfo( aRes[2],STR(aRes[1])+STR(nG) )
+   EndIf
    aVT[nG,nK] += aV[2] * aRes[3]
    If (nL --) > 1
       aRes := MyReadRow( hRes )

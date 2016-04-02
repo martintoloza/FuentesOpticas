@@ -18,7 +18,7 @@ DEFINE DIALOG oDlg TITLE aRep[2] FROM 0, 0 TO 13,56
                      (If( oApl:oEmp:Seek( {"localiz",aOpc[1]} ),;
                       (nEmpresa( .t. ), .t. )           ,;
                       (MsgStop("Esta Optica NO EXISTE"), .f.) ))) } );
-      SIZE 24,12 PIXEL WHEN !lResu
+      SIZE 24,12 PIXEL
    @ 16, 00 SAY "A PRECIO COSTO O PUBLICO" OF oDlg RIGHT PIXEL SIZE 100,10
    @ 16,102 GET oGet[2] VAR aOpc[2] OF oDlg PICTURE "!"            ;
       VALID If( aOpc[2] $ "CP", .t., .f. )   SIZE 08,12 PIXEL
@@ -120,34 +120,42 @@ RETURN
 
 //------------------------------------//
 STATIC PROCEDURE ListoRes( aLS )
-   LOCAL aRes, hRes, cQry, nL, nK, aRpd := { 0,0,0,0,0,0 }
-   LOCAL oRpt := TDosPrint()
+   LOCAL aRes, aRpd, hRes, nL, nK, oRpt
+aRes := "SELECT c.optica, c.numrep, d.grupo, CAST(SUM(d.cantidad) AS UNSIGNED INTEGER), "+;
+           "SUM(d.cantidad*d.p" + aLS[2]              +;
+      ") FROM cadrepod d, cadrepoc c "                +;
+        "WHERE d.indica   <> 'B'"                     +;
+         " AND c.numrep    = d.numrep"                +;
+         " AND c.fecharep >= " + xValToChar( aLS[3] ) +;
+         " AND c.fecharep <= " + xValToChar( aLS[4] ) + If( EMPTY( aLS[1] ), "",;
+         " AND c.optica    = " + STR(oApl:nEmpresa,2))+;
+         " GROUP BY c.numrep, d.grupo ORDER BY c.numrep"
+hRes := If( MSQuery( oApl:oMySql:hConnect,aRes ) ,;
+            MSStoreResult( oApl:oMySql:hConnect ), 0 )
+If (nL := MSNumRows( hRes )) == 0
+   MsgInfo( "NO HAY INFORMACION PARA LISTAR" )
+   MSFreeResult( hRes )
+   RETURN
+EndIf
+oRpt := TDosPrint()
 oRpt:New( oApl:cPuerto,oApl:cImpres,{"RESUMEN DE REPOSICIONES",;
          "DESDE " + NtChr( aLS[3],"2" ) + " HASTA " + NtChr( aLS[4],"2" ),;
          "No.Repos. Optica  Valor Repos. Cant.Montu. Cant.Liqui. Cant.Acce"+;
          "s. Cant.Conta." },aLS[6] )
-cQry := "SELECT c.optica, c.numrep, d.grupo, CAST(SUM(d.cantidad) AS UNSIGNED INTEGER), SUM(d.cantidad*d.p"+;
-        aLS[2] + ") FROM cadrepoc c, cadrepod d "    +;
-        "WHERE c.fecharep >= " + xValToChar( aLS[3] )+;
-         " AND c.fecharep <= " + xValToChar( aLS[4] )+;
-         " AND d.numrep = c.numrep"                  +;
-         " AND d.indica <> 'B' GROUP BY c.numrep, d.grupo ORDER BY c.numrep"
-hRes := If( MSQuery( oApl:oMySql:hConnect,cQry ) ,;
-            MSStoreResult( oApl:oMySql:hConnect ), 0 )
-If (nL := MSNumRows( hRes )) > 0
+   aRpd := { 0,0,0,0,0,0,0,0,0,0 }
    aRes := MyReadRow( hRes )
    AEVAL( aRes, { | xV,nP | aRes[nP] := MyClReadCol( hRes,nP ) } )
    aLS[1] := ArrayValor( oApl:aOptic,STR(aRes[1],2) )
    aLS[5] := aRes[2]
-EndIf
 While nL > 0
    If (nK := AT(aRes[3],"134")) > 0
       nK := { 1,2,3 }[nK]
    Else
       nK := 4
    EndIf
-   aRpd[nK] += aRes[4]
-   aRpd[05] += aRes[5]
+   aRpd[nK]   += aRes[4]
+   aRpd[nK+6] += aRes[4]
+   aRpd[05]   += aRes[5]
    If (nL --) > 1
       aRes := MyReadRow( hRes )
       AEVAL( aRes, {| xV,nP | aRes[nP] := MyClReadCol( hRes,nP ) } )
@@ -168,12 +176,15 @@ While nL > 0
       AFILL( aRpd,0,1,5 )
    EndIf
 EndDo
-If aRpd[6] > 0
+   MSFreeResult( hRes )
+//              "    " + UPPER(aLS[2]) )
    oRpt:Say(  oRpt:nL,01,REPLICATE("_",78) )
    oRpt:Say(++oRpt:nL,04,"GRAN TOTAL ==>" )
-   oRpt:Say(  oRpt:nL,19,TRANSFORM(aRpd[6],"999,999,999") +;
-              "    " + UPPER(aLS[2]) )
-EndIf
+   oRpt:Say(  oRpt:nL,19,TRANSFORM(aRpd[06],"999,999,999") )
+   oRpt:Say(  oRpt:nL,34,TRANSFORM(aRpd[07],"999,999") )
+   oRpt:Say(  oRpt:nL,46,TRANSFORM(aRpd[08],"999,999") )
+   oRpt:Say(  oRpt:nL,58,TRANSFORM(aRpd[09],"999,999") )
+   oRpt:Say(  oRpt:nL,70,TRANSFORM(aRpd[10],"999,999") )
 oRpt:NewPage()
 oRpt:End()
 RETURN

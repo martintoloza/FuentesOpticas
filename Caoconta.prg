@@ -253,9 +253,9 @@ RETURN nil
 //2-----------------------------------//
 METHOD Ventas( oGet,nLO ) CLASS TContabil
    LOCAL aCV, aCT, aGT, aVT, aRes, hRes, nC, nE, nL
-aVT  := "SELECT u.numfac, u.fechoy, u.cliente, u.totaldes, u.totaliva, "+;
-             "u.totalfac, n.codigo, v.codart, v.cantidad, v.precioven, "+;
-            "v.montoiva, v.pcosto, u.autoriza, u.orden, u.codigo_cli "  +;
+aVT  := "SELECT u.numfac, u.fechoy, u.cliente, u.totaldes, u.totaliva, u.totalfac"+;
+             ", n.codigo, v.codart, v.cantidad, v.precioven, v.montoiva, "        +;
+               "v.pcosto, u.autoriza, u.orden, u.codigo_cli, u.codigo_nit "       +;
         "FROM cadventa v, cadclien n, cadfactu u "      +;
         "WHERE u.optica = v.optica"                     +;
          " AND u.numfac = v.numfac"                     +;
@@ -277,7 +277,7 @@ Else
    aRes := MyReadRow( hRes )
    AEVAL( aRes, { | xV,nP | aRes[nP] := MyClReadCol( hRes,nP ) } )
    aVT := { .035,aRes[1],aRes[2],aRes[3],aRes[5],aRes[6],INT(aRes[7]),;
-            aRes[13],aRes[14],aRes[15],.f. }
+            aRes[13],aRes[14],aRes[15],.f.,aRes[16] }
 EndIf
    nE  := If( oApl:nEmpresa == 21 .AND. ::aLS[2] <= CTOD("31.08.2015"), 18, oApl:nEmpresa )
    aGT := ::BuscaCta( aRes[2],nE,"3" )
@@ -351,7 +351,8 @@ While nL > 0
          If oApl:nEmpresa == 0
             oApl:oNit:Seek( {"codigo",aVT[7]} )
             ::aLS[12]:= aVT[6] - aVT[5]                //Totalfac - Totaliva
-            oApl:aInvme := Retenciones( aVT[3],::aLS[12],oApl:oNit:CODIGO_NIT )
+           // oApl:aInvme := Retenciones( aVT[3],::aLS[12],oApl:oNit:CODIGO_NIT )
+            oApl:aInvme := Retenciones( aVT[3],::aLS[12],aVT[12] )
             aGT[3,5] := oApl:aInvme[6]                 //135515xx  FTE
             aGT[3,7] := oApl:aInvme[1]
             aGT[4,5] := oApl:aInvme[7]                 //13551801  ICA
@@ -400,7 +401,7 @@ While nL > 0
          ::Contable( oGet,1 )
       EndIf
       aVT := { .035,aRes[1],aRes[2],aRes[3],aRes[5],aRes[6],INT(aRes[7]),;
-               aRes[13],aRes[14],aRes[15],.f. }
+               aRes[13],aRes[14],aRes[15],.f.,aRes[16] }
       aGT := ACLONE( aCT )
    EndIf
 EndDo
@@ -575,7 +576,7 @@ While nL > 0
           aDV[6]   := .t.
       EndIf
    EndIf
-   If Rango( aRes[5],{ 1,3,5,8,10 } ) .OR.;
+   If Rango( aRes[5],{ 1,3,5,8,9,10 } ) .OR.;
            ( aRes[5] == 2 .AND. lDev )
       // Cambio, Daño, Sin Costo, Devolucion de BOD u Opticas que no son COC
       If aRes[9] == "C"
