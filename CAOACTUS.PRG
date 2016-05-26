@@ -17,6 +17,7 @@ aOpc := { DATE(),DATE(),1,1,6,0,"Nro. FACTURA" }
 aRep := { {|| Renumera( aOpc,oDlg ) },"RENUMERAR LAS FACTURAS" }
 If lActuS
    aRep := { {|| ActuSaldo( aOpc,oDlg ) },"ACTUALIZAR LOS SALDOS" }
+   aOpc[3] := 2
    aOpc[7] := "GRUPO"
 EndIf
 
@@ -286,7 +287,7 @@ cQry := aMV + ;
          " AND c.fecha >= " + xValToChar( aLS[1] )          +;
          " AND c.fecha <= " + xValToChar( aLS[2] )          +;
          " AND c.clase <= 2"
-CambiarNC( @cQry )
+CambiarNC( @cQry,aLS[1] )
 //MsgInfo( cQry,"6_N.Credito" )
  MSQuery( oApl:oMySql:hConnect,cQry )
 
@@ -407,13 +408,15 @@ oApl:Tipo := "U"
 RETURN
 
 //------------------------------------//
-PROCEDURE CambiarNC( cQry )
+PROCEDURE CambiarNC( cQry,dFec )
    If oApl:nEmpresa == 18
-      cQry := STRTRAN( cQry,"[OPT]","18" ) +;
-         " AND c.tipo <> 'F'"
+      cQry := STRTRAN( cQry,"[OPT]","18" )    + " AND c.tipo <> 'F'"
    ElseIf oApl:nEmpresa == 21
-      cQry := STRTRAN( cQry,"[OPT]","18" ) +;
-         " AND c.tipo  = 'F'"
+      If dFec >= CTOD("01.09.2015")
+         cQry := STRTRAN( cQry,"[OPT]","21" )
+      Else
+         cQry := STRTRAN( cQry,"[OPT]","18" ) + " AND c.tipo  = 'F'"
+      EndIf
    Else
       cQry := STRTRAN( cQry,"[OPT]",LTRIM(STR(oApl:nEmpresa)) )
    EndIf
@@ -658,7 +661,7 @@ cQry := "SELECT d.codigo, d.cantidad "             +;
          " AND c.fecha >= " + xValToChar( aLS[1] ) +;
          " AND c.fecha <= " + xValToChar( aLS[2] ) +;
          " AND c.clase <= 2"
-CambiarNC( @cQry )
+CambiarNC( @cQry,aLS[1] )
 hRes := If( MSQuery( oApl:oMySql:hConnect,cQry ) ,;
             MSStoreResult( oApl:oMySql:hConnect ), 0 )
 nL   := MSNumRows( hRes )

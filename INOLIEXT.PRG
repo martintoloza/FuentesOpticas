@@ -202,7 +202,7 @@ If oApl:nEmpresa > 0
             " AND c.fecha >= " + xValToChar( aLS[2] )     +;
             " AND c.fecha <= " + xValToChar( aLS[3] )     +;
             " AND c.clase <= 2"
-   CambiarNC( @cQry )
+   CambiarNC( @cQry,aLS[2] )
    Lineas( cQry,@aExt,oRpt,"DEVOLUCION DE CLIENTES",6,1 )
 EndIf
 

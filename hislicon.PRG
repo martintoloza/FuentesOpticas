@@ -200,11 +200,11 @@ FOR nV := 1 TO 8 STEP 4
    EndIf
 NEXT nV
 If aDp[4]+aDp[8] == 2
-// lSano  := If( aDp[1] # 0 .AND. aDp[5] # 0, .f., .t. )
    lSano  := If( aDp[1] # 0 .OR. aDp[5] # 0, .f., .t. )
    aDp[6] := ABS( aDp[1] ) - ABS( aDp[5] )
    aDp[6] := ABS( aDp[6] )
-   If aDp[9] # "++" .AND. aDp[9] # "--"
+   If aDp[9] # "++" .AND. aDp[9] # "--" .AND.;
+      aDp[1] + aDp[5] > 0
       nX := 8 + aDp[3]                 // AntiMetropia
       aDR[nX,nE] += 2
       aDR[nX, 8] += 2

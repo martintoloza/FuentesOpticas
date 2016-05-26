@@ -14,6 +14,7 @@ aOP := { { "Totalizar"          ,{|| oA:ResCotiz( oDlg ) } },;
          { "Resumen Factura"    ,{|| oA:ResFactu( oDlg ) } },;
          { "Listar Cotizaciones",{|| oA:Facturar( oDlg ) } },;
          { "Facturar"           ,{|| oA:Facturar( oDlg ) } },;
+         { "Defecto Refractivo" ,{|| oA:ListoDRF() } }      ,;
          { "FAN Amigos Niños"   ,{|| oA:FanChild() } } }
 DEFINE DIALOG oDlg TITLE "Facturación de Remisión" FROM 0, 0 TO 16,50
    @ 02, 00 SAY "Nit o C.C. del Cliente" OF oDlg RIGHT PIXEL SIZE 100,10
@@ -64,6 +65,9 @@ CLASS TFacture FROM TIMPRIME
  METHOD Poder( cX,cTB )
  METHOD ResCotiz( oDlg )
  METHOD LaserCot( hRes,nL )
+ METHOD ListoDRF()
+ METHOD LaserDRF( aDR,hRes,nL )
+ METHOD DefectoRF( aDR,nL )
  METHOD FanChild()
  METHOD FanExcel( hRes,nL )
  METHOD GrabaFan( aVT,cSer,nValor,cQry )
@@ -124,7 +128,7 @@ While !oApl:oAtc:EOF()
       aTF[nK,4] += oApl:oAtc:TOTALFAC
       If ::aLS[5] == 3
          aDet := Buscar( {"optica",::aLS[8],"numero",oApl:oAtc:NUMERO},"cadantid",;
-                          "codart, descri, ppubli, cantidad, despor, desmon, " +;
+                          "codart, descri, ppubli, cantidad, despor, desmon, "   +;
                           "precioven, montoiva, 'P', 0, 0, 1, 0, ordenemp",9 )
          CaoLiFac( oApl:oAtc:NUMERO,aDet,{"0",aTF[nK,7]} )
       ElseIf aFac[2]
@@ -564,6 +568,246 @@ IMPRIME END .F.
 RETURN NIL
 
 //5-----------------------------------//
+METHOD ListoDRF() CLASS TFacture
+   LOCAL aDR, aRes, aGT, aVT, hRes, nL, oRpt
+aDR  := Buscar( "SELECT nombre FROM hisvisua ORDER BY codigo","CM",,9 )
+aRes := "SELECT c.numero, c.autoriza, c.codigo_cli, c.fecha, c.cliente"+;
+             ", c.totalfac, d.codart, d.precioven, d.montoiva "        +;
+        "FROM cadantic c LEFT JOIN cadantid d "         +;
+          "USING(optica, numero) "                      +;
+        "WHERE c.optica = " +      STR(oApl:nEmpresa,2) +;
+         " AND c.codigo_nit = " + LTRIM(STR(::aLS[1]))  +;
+         " AND c.fecha >= " +  xValToChar( ::aLS[2] )   +;
+         " AND c.fecha <= " +  xValToChar( ::aLS[3] )   +;
+         " AND c.indicador <> 'A'"   + If( ::aLS[4] > 0 ,;
+         " AND c.numfac IN(0, " + LTRIM(STR(::aLS[4])) + ")", "" )+;
+         " AND LEFT(d.codart,4) = '0501' ORDER BY c.numero"
+hRes := If( MSQuery( oApl:oMySql:hConnect,aRes ) ,;
+            MSStoreResult( oApl:oMySql:hConnect ), 0 )
+If (nL := MSNumRows( hRes )) == 0
+   MSFreeResult( hRes )
+   RETURN NIL
+ElseIf ::aLS[9] == 2
+   ::LaserDRF( aDR,hRes,nL )
+   RETURN NIL
+EndIf
+aRes:= MyReadRow( hRes )
+AEVAL( aRes, { | xV,nP | aRes[nP] := MyClReadCol( hRes,nP ) } )
+aGT := { 0,0,0,0,0,0,0 }
+aVT := { aRes[1],aRes[2],aRes[3],aRes[4],aRes[5],aRes[6],0,0,0 }
+oRpt := TDosPrint()
+oRpt:New( oApl:cPuerto,oApl:cImpres,{ ALLTRIM(oApl:oNit:NOMBRE),"CONSULTAS",;
+         "COTIZACIONES DESDE "+ NtChr(::aLS[2],"2") + " HASTA " + NtChr(::aLS[3],"2"),;
+         "# COTIZ  #AUTORI.  FECHA COTIZ NOMBRE DEL CLIENTE TOTAL COTIZ  -CONSULT"+;
+         "AS  TOTAL IVA.  DEFECTO REFRACTIVO"},::aLS[6],1,2 )
+While nL > 0
+   aVT[7] += aRes[8]
+   aVT[8] += aRes[9]
+   If (nL --) > 1
+      aRes := MyReadRow( hRes )
+      AEVAL( aRes, {| xV,nP | aRes[nP] := MyClReadCol( hRes,nP ) } )
+   EndIf
+   If nL == 0 .OR. aRes[1] # aVT[1]
+      aVT[9] := aVT[7] + aVT[8]
+      ::DefectoRF( aDR,aVT[3] )
+      oRpt:Titulo( 133 )
+      oRpt:Say( oRpt:nL, 00,STR(aVT[1],7) + STR(aVT[2],9) )
+      oRpt:Say( oRpt:nL, 17,If( aVT[6] # aVT[9], "*", " " ) )
+      oRpt:Say( oRpt:nL, 19,NtChr( aVT[4],"2" ))
+      oRpt:Say( oRpt:nL, 31,aVT[5],20 )
+      oRpt:Say( oRpt:nL, 50,TRANSFORM(aVT[6],  "999,999,999" ))
+      oRpt:Say( oRpt:nL, 63,TRANSFORM(aVT[7],"@Z 99,999,999" ))
+      oRpt:Say( oRpt:nL, 75,TRANSFORM(aVT[8],"@Z 99,999,999" ))
+      oRpt:Say( oRpt:nL, 87,::aLS[7] )
+      oRpt:nL++
+      AEVAL( aVT, {|nVal,nPos| aGT[nPos-6] += nVal },7 )
+      aGT[7] += aVT[6]
+      If nL == 0
+         oRpt:Say(  oRpt:nL, 00,REPLICATE("_",133),,,1 )
+         oRpt:Say(++oRpt:nL, 10,"TOTAL DE " + oRpt:aEnc[2] )
+         oRpt:Say(  oRpt:nL, 50,TRANSFORM(aGT[7],"999,999,999"))
+         oRpt:Say(  oRpt:nL, 63,TRANSFORM(aGT[1], "99,999,999"))
+         oRpt:Say(  oRpt:nL, 75,TRANSFORM(aGT[2], "99,999,999"))
+         oRpt:NewPage()
+         oRpt:nL := oRpt:nLength +1
+         AFILL( aGT,0 )
+      EndIf
+      aVT := { aRes[1],aRes[2],aRes[3],aRes[4],aRes[5],aRes[6],0,0,0 }
+   EndIf
+EndDo
+MSFreeResult( hRes )
+oRpt:End()
+RETURN NIL
+
+//------------------------------------//
+METHOD LaserDRF( aDR,hRes,nL ) CLASS TFacture
+   LOCAL aRes, aGT, aVT
+aRes:= MyReadRow( hRes )
+AEVAL( aRes, { | xV,nP | aRes[nP] := MyClReadCol( hRes,nP ) } )
+aGT := { 0,0,0,0,0,0,0 }
+aVT := { aRes[1],aRes[2],aRes[3],aRes[4],aRes[5],aRes[6],0,0,0 }
+ ::aLS[7]:= " COTIZ.DEL " + NtChr(::aLS[2],"2") + " AL " + NtChr(::aLS[3],"2")
+ ::aEnc := { .t., oApl:cEmpresa, oApl:oEmp:Nit                 ,;
+             ALLTRIM(oApl:oNit:NOMBRE), "CONSULTAS" + ::aLS[7] ,;
+             { .T., 1.5,"# Cotiz" }   , { .T., 2.9,"Autori." } ,;
+             { .F., 3.1,"FECHA COTIZ" }                        ,;
+             { .F., 5.1,"NOMBRE DEL CLIENTE" }                 ,;
+             { .T.,10.1,"Total Cotiz" },;
+             { .T.,11.9,"Consultas" }  , { .T.,13.7,"TOTAL IVA." },;
+             { .F.,13.9,"DEFECTO REFRACTIVO" } }
+ ::Init( ::aEnc[4], .f. ,, !::aLS[6] ,,,, 5 )
+ ::nMD := 20.9
+  PAGE
+While nL > 0
+   aVT[7] += aRes[8]
+   aVT[8] += aRes[9]
+   If (nL --) > 1
+      aRes := MyReadRow( hRes )
+      AEVAL( aRes, {| xV,nP | aRes[nP] := MyClReadCol( hRes,nP ) } )
+   EndIf
+   If nL == 0 .OR. aRes[1] # aVT[1]
+      aVT[9] := aVT[7] + aVT[8]
+      ::DefectoRF( aDR,aVT[3] )
+      ::Cabecera( .t.,0.45 )
+      UTILPRN ::oUtil Self:nLinea,01.5 SAY STR(aVT[1],7)  RIGHT
+      UTILPRN ::oUtil Self:nLinea,02.8 SAY STR(aVT[2],9)  RIGHT
+      UTILPRN ::oUtil Self:nLinea,02.9 SAY If( aVT[6] # aVT[9], "*", " " )
+      UTILPRN ::oUtil Self:nLinea,03.1 SAY NtChr( aVT[4],"2" )
+      UTILPRN ::oUtil Self:nLinea,05.1 SAY  LEFT( aVT[5],20 )
+      UTILPRN ::oUtil Self:nLinea,10.1 SAY TRANSFORM( aVT[6],  "999,999,999" ) RIGHT
+      UTILPRN ::oUtil Self:nLinea,11.9 SAY TRANSFORM( aVT[7],"@Z 99,999,999" ) RIGHT
+      UTILPRN ::oUtil Self:nLinea,13.7 SAY TRANSFORM( aVT[8],"@Z 99,999,999" ) RIGHT
+      UTILPRN ::oUtil Self:nLinea,13.9 SAY ::aLS[7]
+      AEVAL( aVT, {|nVal,nPos| aGT[nPos-6] += nVal },7 )
+      aGT[7] += aVT[6]
+      If nL == 0
+         ::Cabecera( .t.,0.40,0.90,20.9 )
+         UTILPRN ::oUtil Self:nLinea,02.0 SAY "TOTAL DE CONSULTAS"
+         UTILPRN ::oUtil Self:nLinea,10.1 SAY TRANSFORM( aGT[7],"999,999,999" ) RIGHT
+         UTILPRN ::oUtil Self:nLinea,11.9 SAY TRANSFORM( aGT[1], "99,999,999" ) RIGHT
+         UTILPRN ::oUtil Self:nLinea,13.7 SAY TRANSFORM( aGT[2], "99,999,999" ) RIGHT
+         ::nLinea  := ::nEndLine
+         AFILL( aGT,0 )
+      EndIf
+      aVT := { aRes[1],aRes[2],aRes[3],aRes[4],aRes[5],aRes[6],0,0,0 }
+   EndIf
+EndDo
+MSFreeResult( hRes )
+   ENDPAGE
+IMPRIME END .F.
+RETURN NIL
+
+//------------------------------------//
+METHOD DefectoRF( aDR,nL ) CLASS TFacture
+   LOCAL aRes, aRX, lSano, nV, hRes
+::aLS[7] := ""
+aRes := "SELECT d.ladolente, d.esfera, d.cilindro, d.adicion, c.control "+;
+        "FROM hisdiagn d, hiscntrl c, historic h "           +;
+        "WHERE d.tipodgn    = 'R'"                           +;
+         " AND c.cntrl_id   = d.cntrl_id"                    +;
+         " AND c.fecha     >= " + xValToChar( ::aLS[2]-10 )  +;
+         " AND c.fecha     <= " + xValToChar( ::aLS[3] )     +;
+         " AND h.optica     = c.optica"                      +;
+         " AND h.nro_histor = c.nro_histor"                  +;
+         " AND h.optica     = " +       STR(oApl:nEmpresa,2) +;
+         " AND h.codigo_nit = " + LTRIM(STR(nL))             +;
+         " ORDER BY c.control, d.ladolente"
+/*
+SELECT d.ladolente, d.esfera, d.cilindro, d.adicion, c.control
+FROM hisdiagn d, hiscntrl c, historic h
+WHERE d.tipodgn    = 'R'
+  AND c.cntrl_id   = d.cntrl_id
+  AND c.fecha     >= '2016-04-20'
+  AND c.fecha     <= '2016-05-26'
+  AND h.optica     = c.optica
+  AND h.nro_histor = c.nro_histor
+  AND h.optica     = 48
+  AND h.codigo_nit = 10377
+ORDER BY c.control, d.ladolente
+*/
+hRes := If( MSQuery( oApl:oMySql:hConnect,aRes ) ,;
+            MSStoreResult( oApl:oMySql:hConnect ), 0 )
+If (nL := MSNumRows( hRes )) == 0
+   MSFreeResult( hRes )
+   RETURN NIL
+EndIf
+ aRes := MyReadRow( hRes )
+ AEVAL( aRes, { | xV,nP | aRes[nP] := MyClReadCol( hRes,nP ) } )
+  aRX := { 0,0,0,1,0,0,0,1,"",aRes[5] }
+While nL > 0
+   If UPPER(aRes[1]) == "D"
+      aRX[1] := VAL( aRes[2] )
+      aRX[2] := VAL( aRes[3] )
+      aRX[3] := VAL( aRes[4] )
+      If EMPTY( aRes[2]+aRes[3]+aRes[4] )
+         aRX[4] --
+      EndIf
+   Else
+      aRX[5] := VAL( aRes[2] )
+      aRX[6] := VAL( aRes[3] )
+      aRX[7] := VAL( aRes[4] )
+      If EMPTY( aRes[2]+aRes[3]+aRes[4] )
+         aRX[8] --
+      EndIf
+   EndIf
+      aRX[9] += LEFT( aRes[2],1 )      // ESFERA
+   If (nL --) > 1
+      aRes := MyReadRow( hRes )
+      AEVAL( aRes, {| xV,nP | aRes[nP] := MyClReadCol( hRes,nP ) } )
+   EndIf
+   If (nL == 0 .OR. aRX[10] # aRes[5])
+      FOR nV := 1 TO 8 STEP 4
+         If aRX[nV+3] > 0
+            aRX[nV+2] := If( aRX[nV+2] > 0, 9, 0 )
+            If aRX[nV] > 10.25 .AND. aRX[nV+2] > 0
+               aRX[nV+1] := 9                      // Afacos
+            Else
+               If aRX[nV] == 0     .AND. aRX[nV+1] == 0
+                  aRX[nV+1] := 1                   // EMetrope (N)
+               ElseIf aRX[nV]  < 0 .AND. aRX[nV+1] == 0
+                  aRX[nV+1] := 2                   // Miope (-)
+               ElseIf aRX[nV]  > 0 .AND. aRX[nV+1] == 0
+                  aRX[nV+1] := 3                   // HyperMetrope (+)
+               ElseIf aRX[nV] == 0 .AND. aRX[nV+1] <> 0
+                  aRX[nV+1] := 4                   // Astigmatico Simple
+               ElseIf aRX[nV]  < 0 .AND. aRX[nV+1] <> 0
+                  aRX[nV+1] := 5                   // Astigmatico Miope (-)
+               Else
+                  aRX[nV+1] := 6                   // Astigmatico HyperMetrope (+)
+               EndIf
+               aRX[nV+1] += aRX[nV+2]
+            EndIf
+         Else
+            aRX[nV+1] := 1
+         EndIf
+      NEXT nV
+         If aRX[2] <> aRX[6]
+            ::aLS[7] := aDR[ aRX[2] ] + " / " + aDR[ aRX[6] ]
+         Else
+            ::aLS[7] := aDR[ aRX[2] ]
+         EndIf
+      If aRX[4] + aRX[8] == 2
+         lSano  := If( aRX[1] # 0 .OR. aRX[5] # 0, .f., .t. )
+         aRX[6] := ABS( aRX[1] ) - ABS( aRX[5] )
+         aRX[6] := ABS( aRX[6] )
+         If aRX[9] # "++" .AND. aRX[9] # "--" .AND.;
+            aRX[1] + aRX[5] > 0
+            nV := 8 + aRX[3]                 // AntiMetropia
+            ::aLS[7] := aDR[nV]
+         EndIf
+         If (aRX[6] >= 5.00 .AND. lSano) .OR. ;
+             aRX[6] >= 3.00
+            nV := 7 + aRX[3]                 // AnisoMetropia
+            ::aLS[7] := aDR[nV]
+         EndIf
+      EndIf
+      EXIT
+   EndIf
+EndDo
+ MSFreeResult( hRes )
+RETURN NIL
+
+//6-----------------------------------//
 METHOD FanChild() CLASS TFacture
    LOCAL aRes, aCH, aGT, aVT, cTB, hRes, nL, nK, oRpt, oTB
 cTB  := If( ::aLS[9] == 3, "IN(44, 54)", "= " + LTRIM(STR(oApl:nEmpresa)) )

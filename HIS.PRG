@@ -94,7 +94,7 @@ CLASS THis
    DATA cCiu, cPer, cRuta1, cRuta2, cLocal, nUS, nTFor
    DATA cImpres, cPuerto, nTHoja, nLF, nItems
    DATA cIco, cIP, cUser, cBaseD, nPort, cSocket
-   DATA lEnLinea, lFam, nEmpresa, nSaldo, nX, nY
+   DATA lEnLinea, lFam, lOffice, nEmpresa, nSaldo, nX, nY
    DATA nClrBackHead, nClrForeHead, nClrBack, nClrFore
    DATA nClrBackFocus, nClrForeFocus, nClrNBack, nClrNFore, nGotFocus, nLostFocus
    DATA oMysql, oDb, oWnd, oLoc, oBD
@@ -213,6 +213,7 @@ If !::lSalir
                "PARA OBTENER LA LICENCIA............" )
       ::lSalir := .t.
    EndIf
+   ::lOffice := FILE( "OPENOFICE.BAT" )
 EndIf
 RETURN NIL
 

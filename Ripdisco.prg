@@ -95,8 +95,10 @@ METHOD Cerrar( lCie ) CLASS TRips
    LOCAL cF, nT, oTB
 If lCie
    FOR nT := 1 TO 6
-      ::oTB[nT]:Destroy()
-      MSQuery( oApl:oMySql:hConnect,"DROP TABLE " + ::cTB + RIGHT(::aTB[nT],2) )
+      If nT <> 5
+         ::oTB[nT]:Destroy()
+         MSQuery( oApl:oMySql:hConnect,"DROP TABLE " + ::cTB + RIGHT(::aTB[nT],2) )
+      EndIf
    NEXT nT
    oApl:oDb:GetTables()
 Else
@@ -312,7 +314,7 @@ If MsgYesNo( "Si esta todo Ok.", "Inserte un DISKETTE vacio en la Unidad" )
  //MsgInfo( "Número de Remisión "+cTipo )
    MsgStop( "Estan en la Carpeta "+cRut,"Número de Remisión "+cTipo )
 EndIf
-::Cerrar( .t. )
+ ::Cerrar( .t. )
 
 RETURN NIL
 
@@ -370,6 +372,8 @@ If !::oTB[5]:Seek( {"nroiden",oApl:oHis:NROIDEN} )
    ::oTB[5]:DPTORH    :=  LEFT(oApl:oHis:RESHABIT,2)
    ::oTB[5]:MUNIRH    := RIGHT(oApl:oHis:RESHABIT,3)
    ::oTB[5]:ZONARESI  := oApl:oHis:ZONARESI
+   ::oTB[5]:FECHANAC  := oApl:oHis:FEC_NACIMI
+   ::oTB[5]:FECHACON  := dFec
    ::oTB[5]:Append( .f. )
 EndIf
 RETURN NIL

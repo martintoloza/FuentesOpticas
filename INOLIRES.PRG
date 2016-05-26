@@ -211,7 +211,7 @@ If oApl:nEmpresa # 0
          " AND c.fecha >= " + xValToChar( aGT[1] ) +;
          " AND c.fecha <= " + xValToChar( aGT[2] ) +;
          " AND c.clase <= 2"
-   CambiarNC( @cQry )
+   CambiarNC( @cQry,aGT[1] )
    hRes := If( MSQuery( oApl:oMySql:hConnect,cQry ) ,;
                MSStoreResult( oApl:oMySql:hConnect ), 0 )
    nL   := MSNumRows( hRes )

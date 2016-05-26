@@ -476,7 +476,9 @@ Case cTabla == "ripus"          // Archivo de Usuarios de los servicios de salud
                 { "sexo"      , "C", 01, 00, },;
                 { "dptorh"    , "C", 02, 00, },;
                 { "munirh"    , "C", 03, 00, },;
-                { "zonaresi"  , "C", 01, 00, } }
+                { "zonaresi"  , "C", 01, 00, },;
+                { "fechanac"  , "D", 08, 00, },;
+                { "fechacon"  , "D", 08, 00, } }
 EndCase
 If xDbf == nil
    cTabla := If( cTB == nil, cTabla, cTB )

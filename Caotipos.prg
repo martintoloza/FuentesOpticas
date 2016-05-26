@@ -73,6 +73,7 @@ RETURN .f.
 PROCEDURE Actualiz( cCodigo,nCantid,dFecha,nMov,nPCos )
    LOCAL aCam, cQry, nCF := 4
    //DEFAULT nPCos := oApl:oInv:PCOSTO
+//If !oApl:oEmp:TACTUINV .AND.;
 If LEFT( cCodigo,2) # "05" .AND.;
   NtChr( cCodigo ) >= 10   .AND. nCantid # 0
    aCam := { "", "fec_ults = ", nCantid, NtChr( dFecha,"1"),;
