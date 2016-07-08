@@ -39,12 +39,12 @@ DEFINE BRUSH oBru FILE oApl:FondoWnd()
 // Definir Ventana Principal
 DEFINE WINDOW oApl:oWnd FROM 1,1 TO 400,600 PIXEL  ;
    TITLE oApl:cEmpresa +                           ;
-        " [ Sistema de Caja Registradora ver 1.0 ]";
+        " [ Sistema de Caja Registradora ver 2.0 ]";
    BRUSH oBru                                      ;
    MENU Creamenu()                                 ;
    MDI ICON oIco                                   ;
    COLOR CLR_BLUE,RGB(0,128,192)
-   SET MESSAGE OF oApl:oWnd TO "Tolozano. Telf: 3815140  Celular: 300-8045043, 321-6627536";
+   SET MESSAGE OF oApl:oWnd TO "ToLozano. Telf: 3815140  Celular: 300-8045043, 321-6627536";
        TIME DATE KEYBOARD
    DEFINE BUTTONBAR OF oApl:oWnd 3DLOOK SIZE 40,40
       DEFINE BUTTON RESOURCE "Salir" ADJUST OF oApl:oWnd:oBar NOBORDER;
@@ -211,11 +211,11 @@ If !::lSalir
                  "BUENAS TARDES" ) + "   >> HOY ES <<"  + CRLF +;
         NtChr( DATE(),"5" ) + " " + NtChr( DATE(),"2" ) + CRLF +;
               "Y SON LAS " + AmPm(TIME())
-   If !MsgYesNo( cFecha,::cUser )
+   If !MsgYesNo( cFecha,::cUser+" <<"+TRIM(::cIP)+">>" )
       ::lSalir := .t.
       RETURN NIL
    EndIf
-   If oApl:dFec >= CTOD("31.07.2016") + ::oEmp:DIAS
+   If oApl:dFec >= CTOD("31.12.2016") + ::oEmp:DIAS
       MsgStop( "ESTO ERA UN PROGRAMA DE DEMOSTRACION" + CRLF +;
                "POR FAVOR CONTACTE A SU PROPIETARIO " + CRLF +;
                "PARA OBTENER LA LICENCIA............" )

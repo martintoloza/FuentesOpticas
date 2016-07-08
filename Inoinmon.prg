@@ -31,7 +31,7 @@ DEFINE DIALOG oM:oDlg FROM 0, 0 TO 370, 580 PIXEL;
       UPDATE COLOR nRGB( 255,0,0 )
    @ 28, 00 SAY "Optica" OF oM:oDlg RIGHT PIXEL SIZE 50,10
    @ 28, 52 GET oGet[2] VAR oM:aCab[2] OF oM:oDlg PICTURE "@!"     ;
-      VALID Eval( {|| If( oApl:oEmp:Seek( {"localiz",oM:aCab[2]} ),;
+      VALID EVAL( {|| If( oApl:oEmp:Seek( {"localiz",oM:aCab[2]} ),;
                         ( oApl:nEmpresa := oApl:oEmp:OPTICA       ,;
                           oM:CambiaOptica(), .t. )                ,;
                         (MsgStop("Esta Optica NO EXISTE"), .f.) ) } );
@@ -474,35 +474,37 @@ If lSi
             " AND devol_s    = 0 AND devolcli  = 0" }
    ::oMtc:OPTICA := oApl:nEmpresa
    ::oMtc:Update( .f.,1 )
-   ::oMtd:GoTop():Read()
-   ::oMtd:xLoad()
-   While !::oMtd:Eof()
-      If (aO[3] := VAL(::oMtd:CONSEC)) > 0
-          aO[5] := "010" + If( ::oMtd:MATERIAL == "P", "1", "2" )
-         FOR aO[4] := 1 TO ::oMtd:CANTIDAD
-             aO[6] := aO[5] + StrZero( aO[3],6 )
-            If oApl:oInv:Seek( {"codigo",aO[6]} )
-               oApl:oInv:OPTICA := ::oMtc:OPTICA
-               If ::oMtc:OPTICA == 0
-                  oApl:oInv:COMPRA_D := .f.
-               ElseIf !oApl:oNit:GRUPO
-                  oApl:oInv:COMPRA_D := .t.
-               EndIf
-               oApl:oInv:Update( .f.,1 )
-            EndIf
-            oApl:nEmpresa := aO[1]
-            Actualiz( aO[6],-1,::oMtc:FECINGRE,1,::oMtd:PCOSTO )
-            Guardar( STRTRAN( aO[7],"[COD]",aO[6] ),"cadinvme" )
-            oApl:nEmpresa := ::oMtc:OPTICA
-            Actualiz( aO[6], 1,::oMtc:FECINGRE,1,::oMtd:PCOSTO )
-            aO[3] ++
-         NEXT
-      EndIf
-      ::oMtd:Skip(1):Read()
+   If !oApl:oEmp:TACTUINV
+      ::oMtd:GoTop():Read()
       ::oMtd:xLoad()
-   EndDo
-   ::oMtd:Go( aO[2] ):Read()
-   ::oMtd:xLoad()
+      While !::oMtd:Eof()
+         If (aO[3] := VAL(::oMtd:CONSEC)) > 0
+             aO[5] := "010" + If( ::oMtd:MATERIAL == "P", "1", "2" )
+            FOR aO[4] := 1 TO ::oMtd:CANTIDAD
+                aO[6] := aO[5] + StrZero( aO[3],6 )
+               If oApl:oInv:Seek( {"codigo",aO[6]} )
+                  oApl:oInv:OPTICA := ::oMtc:OPTICA
+                  If ::oMtc:OPTICA == 0
+                     oApl:oInv:COMPRA_D := .f.
+                  ElseIf !oApl:oNit:GRUPO
+                     oApl:oInv:COMPRA_D := .t.
+                  EndIf
+                  oApl:oInv:Update( .f.,1 )
+               EndIf
+               oApl:nEmpresa := aO[1]
+               Actualiz( aO[6],-1,::oMtc:FECINGRE,1,::oMtd:PCOSTO )
+               Guardar( STRTRAN( aO[7],"[COD]",aO[6] ),"cadinvme" )
+               oApl:nEmpresa := ::oMtc:OPTICA
+               Actualiz( aO[6], 1,::oMtc:FECINGRE,1,::oMtd:PCOSTO )
+               aO[3] ++
+            NEXT
+         EndIf
+         ::oMtd:Skip(1):Read()
+         ::oMtd:xLoad()
+      EndDo
+      ::oMtd:Go( aO[2] ):Read()
+      ::oMtd:xLoad()
+   EndIf
    If ::aCab[8]  # oApl:oEmp:PRINCIPAL .AND.;
      (::aCab[8]  # 0 .AND. ::aCab[8] # 4)
       ::Borrar( ::oMtc:FECINGRE )
@@ -588,7 +590,7 @@ If !oApl:lEnLinea
       ::oMtd:GoTop():Read()
       ::oMtd:xLoad()
       While !::oMtd:Eof()
-         If (nCon := VAL(::oMtd:CONSEC)) > 0
+         If !oApl:oEmp:TACTUINV .AND. (nCon := VAL(::oMtd:CONSEC)) > 0
             cCod := "010" + If( ::oMtd:MATERIAL == "P", "1", "2" )
             FOR nCan := 1 TO ::oMtd:CANTIDAD
                aGT[5] := cCod + StrZero( nCon,6 )
@@ -811,6 +813,15 @@ If aFec[2] > 0
 EndIf
 aMtc := Buscar( aMtc,"comprasc","optica, ingreso, codigo_nit, fecingre, factura, moneda",2 )
 FOR nC := 1 TO LEN( aMtc )
+   If oApl:oEmp:TACTUINV
+      cCon := "SELECT sp_crea_montura(" + LTRIM(STR(aMtc[nC,2])) + ") FROM DUAL"
+      If MSQuery( oApl:oMySql:hConnect,cCon )
+         MsgInfo( "Ingreso "+TRANSFORM(aMtc[nC,2],"999,999"),"Actualizado" )
+      Else
+         oApl:oMySql:oError:Display( .f. )
+      EndIf
+      LOOP
+   EndIf
    If (oApl:nEmpresa := aMtc[nC,1]) == 0
       aDat := { CTOD(""), .f., 0,"",0,"" }
    Else

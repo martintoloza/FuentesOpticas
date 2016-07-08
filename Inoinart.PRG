@@ -413,17 +413,19 @@ METHOD CambiaOptica() CLASS TCompra
 If ::oArc:CONTROL > 0 .AND. nOptica # oApl:nEmpresa
    ::oArc:OPTICA := oApl:nEmpresa
    ::oArc:Update( .f.,1 )
-   ::oArd:GoTop():Read()
-   ::oArd:xLoad()
-   While !::oArd:Eof()
-      oApl:nEmpresa := nOptica
-      Actualiz( ::oArd:CODIGO,-::oArd:CANTIDAD,::oArc:FECINGRE,1,::oArd:PCOSTO )
-      oApl:nEmpresa := ::oArc:OPTICA
-      Actualiz( ::oArd:CODIGO, ::oArd:CANTIDAD,::oArc:FECINGRE,1,::oArd:PCOSTO )
-      ::oArd:Skip(1):Read()
+   If !oApl:oEmp:TACTUINV
+      ::oArd:GoTop():Read()
       ::oArd:xLoad()
-   EndDo
-   ::oArd:Go( nReg ):Read()
+      While !::oArd:Eof()
+         oApl:nEmpresa := nOptica
+         Actualiz( ::oArd:CODIGO,-::oArd:CANTIDAD,::oArc:FECINGRE,1,::oArd:PCOSTO )
+         oApl:nEmpresa := ::oArc:OPTICA
+         Actualiz( ::oArd:CODIGO, ::oArd:CANTIDAD,::oArc:FECINGRE,1,::oArd:PCOSTO )
+         ::oArd:Skip(1):Read()
+         ::oArd:xLoad()
+      EndDo
+      ::oArd:Go( nReg ):Read()
+   EndIf
    If ::aCab[7]  # oApl:oEmp:PRINCIPAL .AND.;
      (::aCab[7]  # 0 .AND. ::aCab[7] # 4)
       ::Borrar( ::oArc:FECINGRE )

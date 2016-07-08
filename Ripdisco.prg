@@ -6,7 +6,7 @@
 MEMVAR oApl
 
 PROCEDURE Diskette( nOpc,oAd )
-   LOCAL aRep, oR, oDlg, oGet := ARRAY(10)
+   LOCAL aRep, oR, oDlg, oGet := ARRAY(11)
 If nOpc == 3
    oAd := TRip(); oAd:New( 2,.f. )
 EndIf
@@ -45,17 +45,19 @@ DEFINE DIALOG oDlg TITLE oR:cTit FROM 0, 0 TO 18,70
    @  86, 00 SAY "Plan de Beneficios"   OF oDlg RIGHT PIXEL SIZE 80,10
    @  86, 82 GET oGet[8] VAR oR:aLS[8] OF oDlg ;
       WHEN nOpc == 3          SIZE 100,10 PIXEL
+   @  74,126 SAY "TIPO DE IMPRESORA"   OF oDlg RIGHT PIXEL SIZE 90,10
+   @  74,218 COMBOBOX oGet[9] VAR oR:aLS[10] ITEMS { "MS-DOS","Laser","Excel" };
+      SIZE 48,90 OF oDlg PIXEL
    @  98, 00 SAY "Total Moderadora ó CoPago" OF oDlg RIGHT PIXEL SIZE 80,10
    @  98, 82 SAY oR:aLS[10] OF oDlg PICTURE "999,999,999" ;
       SIZE 42,10 PIXEL UPDATE COLOR nRGB( 255,0,128 )
    @  98,126 SAY "Total a Facturar" OF oDlg RIGHT PIXEL SIZE 70,10
-   @  98,198 SAY oR:aLS[11] OF oDlg PICTURE "999,999,999" ;
+   @  98,198 SAY oR:aLS[12] OF oDlg PICTURE "999,999,999" ;
       SIZE 42,10 PIXEL UPDATE COLOR nRGB( 255,0,128 )
-
-   @ 112, 50 BUTTON oGet[09] PROMPT "Aceptar"  SIZE 44,12 OF oDlg ACTION;
-      ( oGet[09]:Disable(), EVAL( aRep[nOpc] ), oDlg:End() ) PIXEL
-    oGet[09]:cToolTip := "Si todo está Ok Pulsame"
-   @ 112,100 BUTTON oGet[10] PROMPT "Cancelar" SIZE 44,12 OF oDlg CANCEL;
+   @ 112, 50 BUTTON oGet[10] PROMPT "Aceptar"  SIZE 44,12 OF oDlg ACTION;
+      ( oGet[10]:Disable(), EVAL( aRep[nOpc] ), oDlg:End() ) PIXEL
+    oGet[10]:cToolTip := "Si todo está Ok Pulsame"
+   @ 112,100 BUTTON oGet[11] PROMPT "Cancelar" SIZE 44,12 OF oDlg CANCEL;
       ACTION oDlg:End() PIXEL
    @ 116, 02 SAY "[RIPDISCO]" OF oDlg PIXEL SIZE 32,10
    ACTIVAGET(oGet)
@@ -69,12 +71,13 @@ RETURN
 CLASS TRips
  DATA cTB, cTit
  DATA aLS  INIT { DATE()   , DATE()   , DATE()   , SPACE(06),;
-                  SPACE(20), SPACE(15), SPACE(15), SPACE(30), "",0,0 }
+                  SPACE(20), SPACE(15), SPACE(15), SPACE(30), "",1,0,0 }
  DATA aTB  INIT { "ripac","ripad","ripaf","ripat","ripus","ripct" }
  DATA oTB  INIT { ,,,,, }
  METHOD New( nOpc ) Constructor
  METHOD Cerrar( lCie )
- METHOD ArmoRepor( nT )
+ METHOD ArmoRepor( nL )
+ METHOD ArmoExcel( nL )
  METHOD ArmoDatos( oDlg,oArs )
  METHOD ATransac( cFac,dFec,nPago,nNeto )
  METHOD Control( cTipo )
@@ -120,6 +123,10 @@ RETURN NIL
 //------------------------------------//
 METHOD ArmoRepor( nL ) CLASS TRips
    LOCAL aRes, cQry, hRes, oRpt, nTF := 0
+If nL == 1 .AND. ::aLS[10] == 3
+   ::ArmoExcel( nL )
+   RETURN NIL
+EndIf
 cQry := "SELECT r.fecha, r.factura, h.nroiden, "                   +;
         "CONCAT(h.nombres, ' ', h.apellidos), r.valor, r.valormod "+;
         "FROM historia h, " + {"ridconsu r ", "ridservi r "}[nL]   +;
@@ -155,8 +162,8 @@ While nL > 0
    oRpt:Say( oRpt:nL,82,TRANSFORM( aRes[5],"999,999,999.99" ) )
    oRpt:Say( oRpt:nL,98,TRANSFORM( aRes[6],"999,999,999.99" ) )
    oRpt:nL ++
-   ::aLS[10] += aRes[5]
-   ::aLS[11] += aRes[6]
+   ::aLS[11] += aRes[5]
+   ::aLS[12] += aRes[6]
    nTF ++
    nL --
 EndDo
@@ -164,12 +171,75 @@ EndDo
    oRpt:Say( oRpt:nL++,40,REPLICATE( "=",72 ) )
    oRpt:Say( oRpt:nL  ,40,STR( nTF,8) )
    oRpt:Say( oRpt:nL  ,69,"TOTALES ===>" )
-   oRpt:Say( oRpt:nL  ,82,TRANSFORM( ::aLS[10],"999,999,999.99" ) )
-   oRpt:Say( oRpt:nL++,98,TRANSFORM( ::aLS[11],"999,999,999.99" ) )
-   ::aLS[10] -= ::aLS[11]
-   oRpt:Say( oRpt:nL  ,82,TRANSFORM( ::aLS[10],"999,999,999.99" ) )
+   oRpt:Say( oRpt:nL  ,82,TRANSFORM( ::aLS[11],"999,999,999.99" ) )
+   oRpt:Say( oRpt:nL++,98,TRANSFORM( ::aLS[12],"999,999,999.99" ) )
+   ::aLS[11] -= ::aLS[12]
+   oRpt:Say( oRpt:nL  ,82,TRANSFORM( ::aLS[11],"999,999,999.99" ) )
    oRpt:NewPage()
    oRpt:End()
+RETURN NIL
+
+//------------------------------------//
+METHOD ArmoExcel( nL ) CLASS TRips
+   LOCAL aRes, cQry, hRes, nF, oRpt
+cQry := "SELECT h.nroiden, h.tipoiden, h.apellidos, h.papel, h.nombres, "  +;
+               "h.pnomb, h.fec_nacimi, h.sexo, r.fecha, r.valor "+;
+        "FROM historia h, ridconsu r "                     +;
+        "WHERE r.codigo_nit = h.codigo_nit"                +;
+         " AND r.optica     = " + LTRIM(STR(oApl:nEmpresa))+;
+         " AND r.fecha     >= " + xValToChar( ::aLS[2] )   +;
+         " AND r.fecha     <= " + xValToChar( ::aLS[3] )   +;
+         " AND r.codadmin   = " + xValToChar( ::aLS[4] )   +;
+         " ORDER BY r.fecha"
+hRes := If( MSQuery( oApl:oMySql:hConnect,cQry ) ,;
+            MSStoreResult( oApl:oMySql:hConnect ), 0 )
+If (nL := MSNumRows( hRes )) == 0
+   MsgInfo( "NO HAY INFORMACION PARA LISTAR" )
+   MSFreeResult( hRes )
+   RETURN NIL
+EndIf
+cQry := cFilePath( GetModuleFileName( GetInstance() )) + "Test1.xls"
+oRpt := TExcelScript():New()
+oRpt:Create( cQry )
+oRpt:Align(1)
+oRpt:Visualizar(.F.)
+oRpt:Say(  1, 1, oApl:cEmpresa )
+oRpt:Say(  2, 2, "CONSULTAS "+ NtChr(::aLS[2],"2")+ " HASTA "+ NtChr(::aLS[3],"2") )
+oRpt:Say(  3, 1, "Documento" )
+oRpt:Say(  3, 2, "Tipo Doc." )
+oRpt:Say(  3, 3, "Pri.Apellido" )
+oRpt:Say(  3, 4, "Seg.Apellido" )
+oRpt:Say(  3, 5, "Pri.Nombre" )
+oRpt:Say(  3, 6, "Seg.Nombre" )
+oRpt:Say(  3, 7, "Fecha Naci" )
+oRpt:Say(  3, 8, "Sexo" )
+oRpt:Say(  3, 9, "Fecha Consulta" )
+oRpt:Say(  3,10, "Valor Consulta" )
+nF := 4
+While nL > 0
+   aRes := MyReadRow( hRes )
+   AEVAL( aRes, { | xV,nP | aRes[nP] := MyClReadCol( hRes,nP ) } )
+   oRpt:Say( nF, 1, aRes[1] )
+   oRpt:Say( nF, 2, aRes[2] )
+   oRpt:Say( nF, 3, SUBSTR( aRes[3],1,aRes[4] ) )
+   oRpt:Say( nF, 4, SUBSTR( aRes[3],2+aRes[4] ) )
+   oRpt:Say( nF, 5, SUBSTR( aRes[5],1,aRes[6] ) )
+   oRpt:Say( nF, 6, SUBSTR( aRes[5],2+aRes[6] ) )
+   oRpt:Say( nF, 7, aRes[07] )
+   oRpt:Say( nF, 8, aRes[08] )
+   oRpt:Say( nF, 9, aRes[09] )
+   oRpt:Say( nF,10, aRes[10] )
+  // oRpt:CellFormat( nF, 10,,,"####.##" )
+   ::aLS[12] += aRes[10]
+   nF ++
+   nL --
+EndDo
+   MSFreeResult( hRes )
+   oRpt:Say( nF, 9, "Total Consultas" )
+   oRpt:Say( nF,10, ::aLS[12] )
+   oRpt:Visualizar(.T.)
+   oRpt:End(.f.) ;  oRpt := NIL
+::aLS[12] := 0
 RETURN NIL
 
 //------------------------------------//
@@ -273,8 +343,8 @@ FOR nK := 1 TO LEN( aDes )
       ::oTB[2]:VALORTOT := aDes[nK,4]
       ::oTB[2]:Append( .f. )
    EndIf
-   ::aLS[10] += aDes[nK,3]
-   ::aLS[11] += aDes[nK,4]
+   ::aLS[11] += aDes[nK,3]
+   ::aLS[12] += aDes[nK,4]
 NEXT nK
 
 oDlg:Update()

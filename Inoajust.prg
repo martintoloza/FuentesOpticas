@@ -351,7 +351,8 @@ RETURN NIL
 //------------------------------------//
 METHOD Ajustar( cCodi,nMov,nCanti,nPC ) CLASS TAjuste
    LOCAL aD := { 0,0,CTOD(""),"E" }
-If nCanti # 0 .AND. LEFT( cCodi,2 ) # "05"
+If !oApl:oEmp:TACTUINV .AND.;
+   nCanti # 0 .AND. LEFT( cCodi,2 ) # "05"
    nMov := ::aCab[5][nMov,2]       //5_Sobrante, 6_Faltante y Robo
    oApl:oInv:Seek( {"codigo",cCodi} )
    If oApl:oInv:GRUPO == "1" .AND. oApl:oInv:OPTICA == oApl:nEmpresa
@@ -365,41 +366,7 @@ If nCanti # 0 .AND. LEFT( cCodi,2 ) # "05"
    Actualiz( cCodi,nCanti,::aCab[2],nMov,nPC )
 EndIf
 RETURN NIL
-/*
-//------------------------------------//
-STATIC PROCEDURE CambAjus()
-   LOCAL aAju := { "",0,"" }, aLis, cQry, nL, hRes
-If oApl:oEmp:AJUSTES > 0
-   RETURN
-EndIf
-cQry := "SELECT anomes, row_id FROM cadajust "       +;
-        "WHERE optica = " + LTRIM(STR(oApl:nEmpresa))+;
-        " ORDER BY anomes"
-hRes := If( MSQuery( oApl:oMySql:hConnect,cQry ) ,;
-            MSStoreResult( oApl:oMySql:hConnect ), 0 )
-nL   := MSNumRows( hRes )
-MsgInfo( cQry,STR(nL) )
-While nL > 0
-   aLis := MyReadRow( hRes )
-   AEVAL( aLis, { |xV,nP| aLis[nP] := MyClReadCol( hRes,nP ) } )
-   If aAju[1]  # aLis[1]
-      aAju[1] := aLis[1]
-      aAju[2] ++
-      aAju[3] := NtChr( aLis[1],"F" )
-      aAju[3] := CTOD( NtChr( aAju[3],"4" ) )
-   EndIf
-   cQry := "UPDATE cadajust SET numero = " +  LTRIM(STR(aAju[2]))+;
-                              ", fecha = " + xValToChar(aAju[3] )+;
-          " WHERE row_id = " + LTRIM(STR(aLis[2]))
-   Guardar( cQry,"cadajust" )
-   nL --
-EndDo
-MSFreeResult( hRes )
- oApl:oEmp:AJUSTES := aAju[2]
- oApl:oEmp:Update(.f.,1)
-MsgInfo( STR(aAju[2]),"Listo" )
-RETURN
-*/
+
 //------------------------------------//
 PROCEDURE InoLiAju()
    LOCAL oDlg, oGet := ARRAY(9)

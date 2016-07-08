@@ -536,7 +536,7 @@ RETURN lSi
 //------------------------------------//
 METHOD DelDeta( nA,nRow ) CLASS TNotasc
    LOCAL cQry
-If !::lBod
+If !::lBod .AND. !oApl:oEmp:TACTUINV
    If ::oDb:CLASE == 5
       cQry := "UPDATE cadinven i, cadantid d SET i.pvendida = d.precioven, "   +;
               "i.factuven = d.numero, i.fecventa = d.fecha, i.situacion = 'A' "+;
@@ -1166,44 +1166,46 @@ RETURN oBar
 PROCEDURE NotaCre( nFac,dFec,nDoc,nPago,nClase )
    LOCAL cQry
 If nPago == NIL
-   If nClase == 5
-      cQry := "UPDATE cadantid v, cadnotad d SET indicador = 'N' "+;
-              "WHERE d.optica = " + LTRIM(STR(oApl:nEmpresa))+;
-               " AND d.numero = " + LTRIM(STR( nDoc ))       +;
-               " AND v.optica = d.optica"                    +;
-               " AND v.numero = " + LTRIM(STR( nFac ))       +;
-               " AND v.codart = d.codigo"
-      MSQuery( oApl:oMySql:hConnect,cQry )
-      cQry := "UPDATE cadinven i, cadantid d SET i.pvendida = 0, "   +;
-              "i.factuven = 0, i.fecventa = NULL, i.situacion = 'E' "+;
-              "WHERE d.optica = " + LTRIM(STR(oApl:nEmpresa))+;
-               " AND d.numero = " + LTRIM(STR( nFac ))       +;
-               " AND LEFT(d.codart,2) = '01'"                +;
-               " AND d.indicador = 'N'"                      +;
-               " AND i.codigo = d.codart"                    +;
-               " AND i.optica = d.optica"                    +;
-               " AND i.factuven = d.numero"
-      MSQuery( oApl:oMySql:hConnect,cQry )
-   Else
-      cQry := "UPDATE cadventa v, cadnotad d SET indicador = 'N' "+;
-              "WHERE d.optica = " + LTRIM(STR(oApl:nEmpresa))+;
-               " AND d.numero = " + LTRIM(STR( nDoc ))       +;
-               " AND v.optica = d.optica"                    +;
-               " AND v.numfac = " + LTRIM(STR( nFac ))       +;
-               " AND v.tipo   = " + xValToChar( oApl:Tipo )  +;
-               " AND v.codart = d.codigo"
-      MSQuery( oApl:oMySql:hConnect,cQry )
-      cQry := "UPDATE cadinven i, cadventa d SET i.pvendida = 0, "   +;
-              "i.factuven = 0, i.fecventa = NULL, i.situacion = 'E' "+;
-              "WHERE d.optica = " + LTRIM(STR(oApl:nEmpresa))+;
-               " AND d.numfac = " + LTRIM(STR( nFac ))       +;
-               " AND d.tipo   = " + xValToChar( oApl:Tipo )  +;
-               " AND LEFT(d.codart,2) = '01'"                +;
-               " AND d.indicador = 'N'"                      +;
-               " AND i.codigo = d.codart"                    +;
-               " AND i.optica = d.optica"                    +;
-               " AND i.factuven = d.numfac"
-      MSQuery( oApl:oMySql:hConnect,cQry )
+   If !oApl:oEmp:TACTUINV
+      If nClase == 5
+         cQry := "UPDATE cadantid v, cadnotad d SET indicador = 'N' "+;
+                 "WHERE d.optica = " + LTRIM(STR(oApl:nEmpresa))+;
+                  " AND d.numero = " + LTRIM(STR( nDoc ))       +;
+                  " AND v.optica = d.optica"                    +;
+                  " AND v.numero = " + LTRIM(STR( nFac ))       +;
+                  " AND v.codart = d.codigo"
+         MSQuery( oApl:oMySql:hConnect,cQry )
+         cQry := "UPDATE cadinven i, cadantid d SET i.pvendida = 0, "   +;
+                 "i.factuven = 0, i.fecventa = NULL, i.situacion = 'E' "+;
+                 "WHERE d.optica = " + LTRIM(STR(oApl:nEmpresa))+;
+                  " AND d.numero = " + LTRIM(STR( nFac ))       +;
+                  " AND LEFT(d.codart,2) = '01'"                +;
+                  " AND d.indicador = 'N'"                      +;
+                  " AND i.codigo = d.codart"                    +;
+                  " AND i.optica = d.optica"                    +;
+                  " AND i.factuven = d.numero"
+         MSQuery( oApl:oMySql:hConnect,cQry )
+      Else
+         cQry := "UPDATE cadventa v, cadnotad d SET indicador = 'N' "+;
+                 "WHERE d.optica = " + LTRIM(STR(oApl:nEmpresa))+;
+                  " AND d.numero = " + LTRIM(STR( nDoc ))       +;
+                  " AND v.optica = d.optica"                    +;
+                  " AND v.numfac = " + LTRIM(STR( nFac ))       +;
+                  " AND v.tipo   = " + xValToChar( oApl:Tipo )  +;
+                  " AND v.codart = d.codigo"
+         MSQuery( oApl:oMySql:hConnect,cQry )
+         cQry := "UPDATE cadinven i, cadventa d SET i.pvendida = 0, "   +;
+                 "i.factuven = 0, i.fecventa = NULL, i.situacion = 'E' "+;
+                 "WHERE d.optica = " + LTRIM(STR(oApl:nEmpresa))+;
+                  " AND d.numfac = " + LTRIM(STR( nFac ))       +;
+                  " AND d.tipo   = " + xValToChar( oApl:Tipo )  +;
+                  " AND LEFT(d.codart,2) = '01'"                +;
+                  " AND d.indicador = 'N'"                      +;
+                  " AND i.codigo = d.codart"                    +;
+                  " AND i.optica = d.optica"                    +;
+                  " AND i.factuven = d.numfac"
+         MSQuery( oApl:oMySql:hConnect,cQry )
+      EndIf
    EndIf
 ElseIf nPago # 0
       cQry := { "P",CTOD(""),0 }

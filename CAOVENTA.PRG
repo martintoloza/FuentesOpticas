@@ -1806,10 +1806,11 @@ RETURN dFec
 //--Actualiza archivos de Inventario CadInven--//
 PROCEDURE GrabaV( nCantidad,cCambio,nHago,dFecH,nFV,nPC )
    LOCAL cGru := LEFT( oApl:oVen:CODART,2 )
-   oApl:aInvme[2] := 0
-If cGru $ "02  05" .OR. nCantidad == 0 .OR. oApl:Tipo == "Z"
+If oApl:oEmp:TACTUINV .OR.;
+   cGru $ "02  05" .OR. nCantidad == 0 .OR. oApl:Tipo == "Z"
    RETURN
 EndIf
+   oApl:aInvme[2] := 0
 If oApl:oInv:Seek( {"codigo",oApl:oVen:CODART} )
    If oApl:oInv:GRUPO == "1" .AND. oApl:oInv:OPTICA == oApl:nEmpresa .AND.;
       Rango( oApl:oInv:FACTUVEN,{0,nFV,oApl:oVen:NUMFAC} )

@@ -490,6 +490,27 @@ Case cTabla == "contacto"
                 { "listo"     , "L", 01, 00, cLogica },;
                 { "nombre_cla", "C", 15, 00, } }
    aIndice := { { "Codigo", { "grupo","codigo" } } }
+Case cTabla == "entregas"
+   aStruct := { { "row_id"    , "N", 11, 00, " auto_increment PRIMARY KEY" },;
+                { "optica"    , "N", 02, 00, },;
+                { "clase"     , "N", 01, 00, " default 1"},;
+                { "doc_id"    , "N", 11, 00, },;
+                { "fecha"     , "E", 19, 00, },;
+                { "entregado" , "C", 30, 00, },;
+                { "recibido"  , "C", 30, 00, } }
+   aIndice := { { "Entrega", {"fecha"} } }
+Case cTabla == "entregav"
+   aStruct := "CREATE VIEW entregav AS "    +;
+              "SELECT c.numero, c.cliente, e.clase, e.recibido, e.entregado, e.fecha "+;
+              "FROM cadantic c, entregas e "+;
+              "WHERE c.optica = e.optica"   +;
+               " AND c.numero = e.doc_id"   +;
+               " AND e.clase  = 1"          +;
+               " UNION ALL "                +;
+             "SELECT u.numfac numero, u.cliente, e.clase, e.recibido, e.entregado, e.fecha "+;
+              "FROM cadfactu u, entregas e "+;
+              "WHERE u.row_id = e.doc_id"   +;
+               " AND e.clase  = 2"
 Case cTabla == "extracto"
    aStruct := { { "row_id"    , "N", 11, 00, " auto_increment PRIMARY KEY" },;
                 { "numfac"    , "N", 10, 00, },;
@@ -691,20 +712,25 @@ Case cTabla == "historia"
       { "CANTIDAD   , "N",   6
       { "PCOSTO     , "N",  12,2
    DEFINE INDEX GRUPO, TIPO   TAG Codigo  */
-If xDbf == nil
-   oTb := TMSTable():Create( oApl:oMySql, cTabla, aStruct )
-   FOR nI := 1 TO LEN( aIndice )
-      If aIndice[nI,1] == "PrimaryKey"
-         oTb:CreatePrimaryKey( aIndice[nI,2] )
-      ElseIf aIndice[nI,1] == "Constraint"
-         MSQuery( oApl:oMySql:hConnect,aIndice[nI,2] )
-      Else
-         oTb:CreateIndex( aIndice[nI,1],aIndice[nI,2], .f. )
-      EndIf
-   NEXT nI
-   oTb:Destroy()
+If VALTYPE( aStruct ) == "C"
+   MSQuery( oApl:oMySql:hConnect,aStruct )
+   oApl:oDb:GetTables()
 Else
-   BorraFile( cTabla,{"DBF"} )
-   dbCREATE( oApl:cRuta2+cTabla,aStruct )
+   If xDbf == nil
+      oTb := TMSTable():Create( oApl:oMySql, cTabla, aStruct )
+      FOR nI := 1 TO LEN( aIndice )
+         If aIndice[nI,1] == "PrimaryKey"
+            oTb:CreatePrimaryKey( aIndice[nI,2] )
+         ElseIf aIndice[nI,1] == "Constraint"
+            MSQuery( oApl:oMySql:hConnect,aIndice[nI,2] )
+         Else
+            oTb:CreateIndex( aIndice[nI,1],aIndice[nI,2], .f. )
+         EndIf
+      NEXT nI
+      oTb:Destroy()
+   Else
+      BorraFile( cTabla,{"DBF"} )
+      dbCREATE( oApl:cRuta2+cTabla,aStruct )
+   EndIf
 EndIf
 RETURN NIL

@@ -366,11 +366,13 @@ While nL > 0 .AND. aV[1] > 0
       oApl:nSaldo := aRes[3]
       oApl:Tipo   := aRes[4]
       GrabaSal( aFac[1],1,0 )
-      oApl:nEmpresa := If( TRIM(aRes[6]) == "FOCA", 21, aTin[1] )
-      oApl:oVen:dbEval( {|o| GrabaV( o:CANTIDAD,"N",2,o:FECFAC,0,1 ) }      ,;
-                        {"optica",aTin[1],"numfac",aFac[1],"tipo",oApl:Tipo ,;
-                         "LEFT(codart,2) NOT IN ","('02','05')","indicador <> ","D"} )
-      oApl:nEmpresa := aTin[1]
+      If !oApl:oEmp:TACTUINV
+         oApl:nEmpresa := If( TRIM(aRes[6]) == "FOCA", 21, aTin[1] )
+         oApl:oVen:dbEval( {|o| GrabaV( o:CANTIDAD,"N",2,o:FECFAC,0,1 ) }      ,;
+                           {"optica",aTin[1],"numfac",aFac[1],"tipo",oApl:Tipo ,;
+                            "LEFT(codart,2) NOT IN ","('02','05')","indicador <> ","D"} )
+         oApl:nEmpresa := aTin[1]
+      EndIf
    EndIf
    aFac[3] ++
    nL --

@@ -311,7 +311,7 @@ RETURN NIL
 //------------------------------------//
 METHOD Marcar( cCodigo,nCanti,lCambio,nBod ) CLASS TRepos
    LOCAL aD, cQry
-If nCanti # 0
+If !oApl:oEmp:TACTUINV .AND. nCanti # 0
    If LEFT( cCodigo,2 )  == "01"
       If lCambio
          aD := { ::oRpc:OPTICA,::oRpc:FECHAREP,::oRpc:NUMREP,0,::oRpc:DESPUB }
@@ -348,28 +348,30 @@ METHOD CambiaOptica() CLASS TRepos
 If ::oRpc:ITEMS   > 0 .AND. aO[1] # oApl:nEmpresa
    ::oRpc:OPTICA := oApl:nEmpresa
    ::oRpc:Update( .f.,1 )
-   aO[2] := ::oRpd:Recno()
-   aO[3] := "UPDATE cadinvme SET optica = " + LTRIM(STR(oApl:nEmpresa))+;
-           " WHERE optica = "  + LTRIM( STR(aO[1]) )       +;
-             " AND anomes = '" + NtChr(::oRpc:FECHAREP,"1")+;
-            "' AND codigo = '[COD]'"                       +;
-             " AND existencia = 0 AND entradas  = 0"       +;
-             " AND salidas    = 0 AND ajustes_e = 0"       +;
-             " AND ajustes_s  = 0 AND devol_e   = 0"       +;
-             " AND devol_s    = 0 AND devolcli  = 0"
-   ::oRpd:GoTop():Read()
-   ::oRpd:xLoad()
-   While !::oRpd:Eof()
-      oApl:nEmpresa := aO[1]
-      Actualiz( ::oRpd:CODIGO,-::oRpd:CANTIDAD,::oRpc:FECHAREP,1,::oRpd:PCOSTO )
-      If LEFT( ::oRpd:CODIGO,2 ) == "01"
-         Guardar( STRTRAN( aO[3],"[COD]",ALLTRIM(::oRpd:CODIGO) ),"cadinvme" )
-      EndIf
-      ::Marcar( ::oRpd:CODIGO, ::oRpd:CANTIDAD,.t.,0 )
-      ::oRpd:Skip(1):Read()
+   If !oApl:oEmp:TACTUINV
+      aO[2] := ::oRpd:Recno()
+      aO[3] := "UPDATE cadinvme SET optica = " + LTRIM(STR(oApl:nEmpresa))+;
+              " WHERE optica = "  + LTRIM( STR(aO[1]) )       +;
+                " AND anomes = '" + NtChr(::oRpc:FECHAREP,"1")+;
+               "' AND codigo = '[COD]'"                       +;
+                " AND existencia = 0 AND entradas  = 0"       +;
+                " AND salidas    = 0 AND ajustes_e = 0"       +;
+                " AND ajustes_s  = 0 AND devol_e   = 0"       +;
+                " AND devol_s    = 0 AND devolcli  = 0"
+      ::oRpd:GoTop():Read()
       ::oRpd:xLoad()
-   EndDo
-   ::oRpd:Go( aO[2] ):Read()
+      While !::oRpd:Eof()
+         oApl:nEmpresa := aO[1]
+         Actualiz( ::oRpd:CODIGO,-::oRpd:CANTIDAD,::oRpc:FECHAREP,1,::oRpd:PCOSTO )
+         If LEFT( ::oRpd:CODIGO,2 ) == "01"
+            Guardar( STRTRAN( aO[3],"[COD]",ALLTRIM(::oRpd:CODIGO) ),"cadinvme" )
+         EndIf
+         ::Marcar( ::oRpd:CODIGO, ::oRpd:CANTIDAD,.t.,0 )
+         ::oRpd:Skip(1):Read()
+         ::oRpd:xLoad()
+      EndDo
+      ::oRpd:Go( aO[2] ):Read()
+   EndIf
    MsgInfo( "El cambio de Optica","HECHO" )
 EndIf
  ::aCab[7] := If( oApl:oEmp:PRINCIPAL == 4, .f., .t. )

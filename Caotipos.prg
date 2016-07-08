@@ -72,17 +72,16 @@ RETURN .f.
 //------------------------------------//
 PROCEDURE Actualiz( cCodigo,nCantid,dFecha,nMov,nPCos )
    LOCAL aCam, cQry, nCF := 4
-   //DEFAULT nPCos := oApl:oInv:PCOSTO
-//If !oApl:oEmp:TACTUINV .AND.;
-If LEFT( cCodigo,2) # "05" .AND.;
+If !oApl:oEmp:TACTUINV     .AND.;
+   LEFT( cCodigo,2) # "05" .AND.;
   NtChr( cCodigo ) >= 10   .AND. nCantid # 0
-   aCam := { "", "fec_ults = ", nCantid, NtChr( dFecha,"1"),;
-             " WHERE optica = " + LTRIM(STR(oApl:nEmpresa))+;
-               " AND codigo = '" + TRIM(cCodigo)           +;
-              "' AND anomes = '" }
+   cQry := NtChr( dFecha,"1" )
+   aCam := { "", "fec_ults = ", nCantid, cQry          ,;
+             " WHERE optica = "  + STR(oApl:nEmpresa,2)+;
+               " AND codigo = '" + TRIM(cCodigo)       +;
+              "' AND anomes = '" + cQry + "'" }
    aCam[1] := {"entradas" ,"salidas"  ,"devol_e","devol_s",;
                "ajustes_e","ajustes_s","devolcli"}[nMov]
-   aCam[5] += aCam[4] + "'"
    If !SaldoInv( cCodigo,aCam[4] )
       cQry := "INSERT INTO cadinvme VALUES ( null, " +;
                LTRIM(STR(oApl:nEmpresa)) + ", '" + aCam[4] + "', "+;

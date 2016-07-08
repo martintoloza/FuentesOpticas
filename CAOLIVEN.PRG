@@ -249,6 +249,7 @@ While ::nL > 0
          aVT[nG,3] += aRes[06]
          aVT[10]   +=  aVT[14]
       EndIf
+      /*
       If LEFT(aRes[3],2) == "01" .AND. aRes[09] == " "           .AND.;
                 aRes[15] == "E"  .AND. aRes[16] == oApl:nEmpresa .AND.;
              oApl:cLocal == "LOC"
@@ -261,6 +262,7 @@ While ::nL > 0
             MSQuery( oApl:oMySql:hConnect,cQry )
          EndIf
       EndIf
+      */
    EndIf
    If (::nL --) > 1
       aRes := MyReadRow( ::hRes )
@@ -387,6 +389,7 @@ While ::nL > 0
          aVT[nG,3] += aRes[06]
          aVT[10]   +=  aVT[14]
       EndIf
+      /*
       If LEFT(aRes[3],2) == "01" .AND. aRes[09] == " "           .AND.;
                 aRes[15] == "E"  .AND. aRes[16] == oApl:nEmpresa .AND.;
              oApl:cLocal == "LOC"
@@ -399,6 +402,7 @@ While ::nL > 0
             MSQuery( oApl:oMySql:hConnect,cQry )
          EndIf
       EndIf
+      */
    EndIf
    If (::nL --) > 1
       aRes := MyReadRow( ::hRes )

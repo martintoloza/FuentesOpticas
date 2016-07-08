@@ -267,11 +267,11 @@ DEFINE DIALOG oDlg TITLE aEd[1] FROM 8,02 TO 22,50
       SIZE 44,99 OF oDlg  PIXEL UPDATE ;
       WHEN ::oDvd:CAUSADEV == 4
    @ 72,00 SAY "Nro. Factura" OF oDlg RIGHT PIXEL SIZE 66,8
-   @ 72,70 GET oGet[7] VAR ::oDvd:NUMREP   OF oDlg                  ;
-      VALID EVAL( {|| If( !::aCab[7], .t.                          ,;
-                ( If( FVenta( ::oDvd:NUMREP,::oDvd:CODIGO,,@aEd,    ;
-                            ::oDvd:CAUSADEV ), (oDlg:Update(), .t.),;
-                    ( MsgStop( "Factura NO EXISTE" ), .f. ) ) )) } );
+   @ 72,70 GET oGet[7] VAR ::oDvd:NUMREP   OF oDlg        ;
+      VALID EVAL( {|| If( !::aCab[7], .t.                ,;
+                  If( FVenta( ::oDvd:NUMREP,::oDvd:CODIGO,;
+                              ,@aEd,::oDvd:CAUSADEV )    ,;
+                      ( oDlg:Update(), .t. ), .f. ) ) } ) ;
       WHEN aEd[5]  SIZE 40,12 PIXEL
    @ 70,120 SAY oGet[8] VAR aEd[3] OF oDlg PIXEL SIZE 60,16 ;
       UPDATE COLOR nRGB( 160,19,132 )
@@ -348,11 +348,13 @@ METHOD SiNo( lOk,cBus ) CLASS TDevol
 If cBus # NIL
    oApl:oInv:Seek( {"codigo",cBus} )
 EndIf
+//cBus := STR(::oDvd:DESTINO) + If( lOk, "SI.", "NO." )
 lOk := If( !lOk .AND. ::oDvd:DESTINO == oApl:oInv:OPTICA, .f., .t. )
 If oApl:oInv:GRUPO    == "1" .AND. ;
   (oApl:oInv:SITUACION $ "DV" .OR. oApl:oInv:OPTICA # oApl:nEmpresa) .AND. lOk
    lSi := .t.
 EndIf
+//MsgInfo( cBus + If( lOk, "SI", "NO" ),If( lSi, "SI", "NO" ) )
 RETURN lSi
 
 //------------------------------------//
@@ -415,7 +417,8 @@ RETURN NIL
 //------------------------------------//
 METHOD Devol( cCodi,nOpt,nCanti,nCDev,lSi ) CLASS TDevol
    LOCAL aDV
-If nCanti # 0 .AND. LEFT( cCodi,2 ) # "05"
+If !oApl:oEmp:TACTUINV    .AND.;
+   LEFT( cCodi,2 ) # "05" .AND. nCanti # 0
    aDV := { Grupos( cCodi ),Rango( nCDev,{1,5} ),.f.,"E",0,CTOD(""),0 }
    If aDV[1] == "1"
       oApl:oInv:Seek( {"codigo",cCodi} )
@@ -423,7 +426,6 @@ If nCanti # 0 .AND. LEFT( cCodi,2 ) # "05"
                                      oApl:oInv:MONEDA == "C"), .t., .f. )
       If nCanti > 0
          aDV[4] := If( Rango( nCDev,4,10 ), "E", If( aDV[2], "V", "D" ) )
-       //aDV[4] := If( nCDev == 4, "E", If( aDV[2], "V", "D" ) )
          aDV[5] := ::oDvc:DOCUMEN
          aDV[6] := ::oDvc:FECHAD
          aDV[7] := ::oDvc:DESPUB
@@ -518,7 +520,6 @@ If LEN( ::aGrp ) == 0
 EndIf
 ::aCab[3] := oApl:oEmp:NUMDEVOL + 1
 ::aCab[7] := If( oApl:lEnLinea .AND. oApl:cLocal == ::aCab[1], .t. , .f. )
-//::aCab[8] := EMPTY( LEFT(oApl:oEmp:FACTURO,1) )
 ::aCab[8] := If( AT( "1",oApl:oEmp:FACTURO ) == 0, .t., .f. )
 RETURN NIL
 
@@ -526,14 +527,14 @@ RETURN NIL
 FUNCTION FVenta( nFac,cCod,nCan,aEd,nCDev )
    LOCAL aRes, cQry, hRes, nL
 If nCDev == 6
-   cQry := "SELECT d.precioven, d.fecfac, c.cliente FROM cadventa d, cadfactu c "+;
+   cQry := "SELECT d.precioven, d.fecfac, c.cliente, d.indicador FROM cadventa d, cadfactu c "+;
            "WHERE d.codart = " + xValToChar( cCod )       +;
             " AND c.optica = d.optica"                    +;
             " AND c.numfac = d.numfac"                    +;
             " AND c.optica = " + LTRIM(STR(oApl:nEmpresa))+;
             " AND c.numfac = " + LTRIM(STR(nFac))
 Else
-   cQry := "SELECT d.pcosto, c.fechad, c.nombre FROM caddevod d, caddevoc c "+;
+   cQry := "SELECT d.pcosto, c.fechad, c.nombre, d.indica FROM caddevod d, caddevoc c "+;
            "WHERE d.codigo  = " + xValToChar( cCod )      +;
             " AND c.optica  = d.optica"                   +;
             " AND c.documen = d.documen"                  +;
@@ -553,24 +554,46 @@ If (nL := MSNumRows( hRes )) > 0
       If oApl:oInv:MONEDA == "C" .AND. NtChr( aRes[2],"1" ) < NtChr( aEd,"1" )
          cQry := NtChr( aEd,"1" )
       EndIf
-      If nCDev == 6 .AND. oApl:nEmpresa == 18
-         If Buscar( {"optica",18,"numfac",nFac},"cadfactu",;
-                   "autoriza",8 ) == "FOCA      "
-            oApl:nEmpresa := 21
+      aRes := If( nCan >= 1, { 0,0,CTOD(""),"E",nFac,cQry,"D" },;
+                       { aRes[1],nFac,aRes[2],"V",0,"NULL","" } )
+      If nCDev == 6
+         // Dev.Cliente
+         If oApl:nEmpresa == 18
+            If Buscar( {"optica",18,"numfac",nFac},"cadfactu",;
+                      "autoriza",8 ) == "FOCA      "
+               oApl:nEmpresa := 21
+            EndIf
          EndIf
+         cQry := "UPDATE cadventa SET indicador = '" + aRes[7]+;
+               "' WHERE optica = " + LTRIM(STR(oApl:nEmpresa))+;
+                  " AND numfac = " + LTRIM(STR(nFac))         +;
+                  " AND codart = " + xValToChar( cCod )
+         MSQuery( oApl:oMySql:hConnect,cQry )
       EndIf
-      aRes := If( nCan >= 1, { 0,0,CTOD(""),"E",nFac,cQry },;
-                      { aRes[1],nFac,aRes[2],"V",0,"NULL" } )
       cQry := "UPDATE cadinven SET "                    +;
-              "pvendida = " +  LTRIM(STR(aRes[1]))      +;
-            ", factuven = " +  LTRIM(STR(aRes[2]))      +;
-            ", fecventa = " + xValToChar(aRes[3])       +;
-            ", situacion = "+ xValToChar(aRes[4])       +;
-           " WHERE codigo = "+xValToChar(cCod)          +;
+               "pvendida = " +  LTRIM(STR(aRes[1]))     +;
+             ", factuven = " +  LTRIM(STR(aRes[2]))     +;
+             ", fecventa = " + xValToChar(aRes[3])      +;
+            ", situacion = " + xValToChar(aRes[4])      +;
+           " WHERE codigo = "+ xValToChar(cCod)         +;
              " AND optica = "+ LTRIM(STR(oApl:nEmpresa))+;
              " AND factuven = " + LTRIM(STR(aRes[5]))
       MSQuery( oApl:oMySql:hConnect,cQry )
+   Else
+      If aRes[4] == "D"
+         cQry := "Devolución"
+         nCan := Buscar( {"optica",oApl:nEmpresa,"numrep",nFac},"caddevod","documen",8,,4 )
+      ElseIf aRes[4] == "N"
+         cQry := "Nota Credito"
+         nCan := Buscar( {"optica",oApl:nEmpresa,"numfac",nFac},"cadnotac","numero",8,,4 )
+      EndIf
+      If nCan # NIL .OR. nCan > 0
+         MsgStop( cQry+STR(nCan),"Artículo ya Fue Devuelto" )
+         nL := 0
+      EndIf
    EndIf
+ElseIf nCan # NIL
+   MsgStop( "Factura NO EXISTE" )
 EndIf
 MSFreeResult( hRes )
 RETURN (nL != 0)
